@@ -7,6 +7,12 @@ const app = express();
 
 app.use(express.json());
 
+
+// Ruta raíz
+app.get('/', (req, res) => {
+  res.send('Bienvenido a la API de Spike');
+});
+
 // Ruta GET para obtener todos los mensajes
 app.get('/messages', async (req, res) => {
   try {
