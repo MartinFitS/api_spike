@@ -27,11 +27,35 @@ model User {
   phone      String
   password   String
   role       Role
+  city       String    
+  number_int Int
+  cp         Int
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
 
   @@map("users")
   @@index([firstName, lastName])
+}
+
+model Veterinary {
+  id         Int       @id @default(autoincrement())
+  veterinarieName  String
+  street   String
+  email      String    @unique
+  phone      String
+  password   String
+  role       Role
+  city       String  
+  locality   String  
+  cologne    String
+  number_int Int
+  cp         Int
+  rfc        String
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@map("veterinarys")
+  @@index([veterinarieName])
 }
 
 enum Role {
