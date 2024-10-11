@@ -2,12 +2,15 @@
 const express = require('express');
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
-const routerUsers = require("./routes/users.routes")
+const routerUsers = require("./routes/users.routes");
+const routerLogin = require("./routes/login.routes")
 
 const port = process.env.PORT || 3000;
 const app = express();
 
 app.use(express.json());
+
+app.use(routerLogin);
 app.use(routerUsers);
 
  
