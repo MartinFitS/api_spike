@@ -2,14 +2,6 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const bcrypt = require('bcrypt');
 
-const updateUser = async (req, res) => {
-    try {
-        res.send("Hola");
-    } catch (e) {
-        console.error(e);
-    }
-};
-
 const createUser = async (req, res) => {
     const { firstName, lastName, email, phone, password, role, city, number_int, cp } = req.body;
 
@@ -70,7 +62,6 @@ const createUser = async (req, res) => {
         res.status(500).json({ error: 'Error al crear usuario' });
     }
 };
-
 
 const createVeterinary = async (req, res) => {
     const { veterinarieName, street, email, phone, password, role, city, locality, cologne, number_int, cp, rfc } = req.body;
@@ -138,6 +129,59 @@ const createVeterinary = async (req, res) => {
     } catch (e) {
         console.error(e);
         res.status(500).json({ error: 'Error al crear la veterinaria' });
+    }
+};
+
+const updateUser = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { rfc, number_int, cp, city, phone, street, email, password, locality, cologne } = req.body;
+        const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+        
+        if (!passwordRegex.test(password)) {
+            return res.status(400).json({ 
+                error: 'La contraseña debe tener al menos 8 caracteres, incluir una mayúscula, un número y un símbolo especial' 
+            });
+        }
+
+        
+        hashedPassword = await bcrypt.hash(password, 10);
+        if (rfc == "") {
+            await prisma.user.update({
+                where: { id: parseInt(id) },
+                data: {
+                    number_int,
+                    cp,
+                    city,
+                    phone,
+
+                    email,
+                    password: hashedPassword || undefined, 
+         
+          
+                }
+            });
+        } else {
+            await prisma.veterinary.update({
+                where: { id: parseInt(id) },
+                data: {
+                    number_int,
+                    cp,
+                    city,
+                    cologne,
+                    phone,
+                    email,
+                    locality,
+                    street,
+                    password: hashedPassword || undefined 
+                }
+            });
+        }
+
+        res.json("Usuario actualizado correctamente");
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: 'Error al actualizar el usuario' });
     }
 };
 
