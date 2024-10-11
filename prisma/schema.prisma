@@ -13,8 +13,53 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model holamundo{
-    id               Int      @id @default(autoincrement())
-    message          String
-    createdAt        DateTime @default(now())
+model holamundo {
+  id        Int      @id @default(autoincrement())
+  message   String
+  createdAt DateTime @default(now())
+}
+
+model User {
+  id         Int       @id @default(autoincrement())
+  firstName  String
+  lastName   String
+  email      String    @unique
+  phone      String
+  password   String
+  role       Role
+  city       String    
+  number_int Int
+  cp         Int
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@map("users")
+  @@index([firstName, lastName])
+}
+
+model Veterinary {
+  id         Int       @id @default(autoincrement())
+  veterinarieName  String
+  street   String
+  email      String    @unique
+  phone      String
+  password   String
+  role       Role
+  city       String  
+  locality   String  
+  cologne    String
+  number_int Int
+  cp         Int
+  rfc        String
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@map("veterinarys")
+  @@index([veterinarieName])
+}
+
+enum Role {
+  ADMIN
+  VETERINARY_OWNER
+  PET_OWNER
 }
