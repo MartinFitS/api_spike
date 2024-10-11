@@ -35,7 +35,8 @@ API Spike para la gestión de veterinarias, que permite crear y administrar dato
     "role": "PET_OWNER",
     "city": "New York",
     "number_int": 45,
-    "cp": 10002
+    "cp": 10002,
+    "token": "asdasd.."
 }
 
 ```
@@ -59,7 +60,8 @@ API Spike para la gestión de veterinarias, que permite crear y administrar dato
     "cologne": "Central",
     "number_int": 42,
     "cp": 10001,
-    "rfc": "ABC123456789"
+    "rfc": "ABC123456789",
+     "token": "asdasd.."
 }
 
 ```
@@ -76,6 +78,7 @@ API Spike para la gestión de veterinarias, que permite crear y administrar dato
 {
     "rfc": "" vacio si es un usaurio normal y con el rfc si es una veterinaria,
     "phone": "3143386885",
+     "token": "asdasd.."
     ...
 }
 
@@ -90,7 +93,8 @@ API Spike para la gestión de veterinarias, que permite crear y administrar dato
 ```json
     
 {
-    "rfc": "" vacio si es un usaurio normal y con el rfc si es una veterinaria
+    "rfc": "" vacio si es un usaurio normal y con el rfc si es una veterinaria,
+     "token": "asdasd.."
 }
 
 ```
@@ -99,9 +103,26 @@ API Spike para la gestión de veterinarias, que permite crear y administrar dato
 
 ### 5. Listar usuarios
 
-- **Endpoint:** `GET /getUsers`
+- **Endpoint:** `POST /getUsers`
 - **Descripción:** Listar usuarios de veterinarias y usuarios.
 - **Parámetros del cuerpo de la solicitud:**
+
+```json
+    {
+        "token": "asdasd.."
+    }
+```
+
+### 5. Login
+
+- **Endpoint:** `POST /login`
+- **Descripción:** Crear una sesión y almacenar el JWT.
+- **Parámetros del cuerpo de la solicitud:**
+```json
+    {
+   "email":"usuario@gmail.com",
+   "password": "User2024?" 
+    }  
 
 ```
 
