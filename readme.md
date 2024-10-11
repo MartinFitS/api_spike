@@ -18,7 +18,7 @@ API Spike para la gestión de veterinarias, que permite crear y administrar dato
 
 ## Endpoints
 
-### 2. Crear Usuario
+### 1. Crear Usuario
 
 - **Endpoint:** `POST /createUser`
 - **Descripción:** Crea un nuevo usuario en la base de datos.
@@ -63,7 +63,41 @@ API Spike para la gestión de veterinarias, que permite crear y administrar dato
 }
 
 ```
-### 3. Listar usuarios
+
+
+### 3. Editar usuarios
+
+- **Endpoint:** `POST /updateUser/:id`
+- **Descripción:** Editar un usuario
+- **Parámetros del cuerpo de la solicitud:**
+
+```json
+    
+{
+    "rfc": "" vacio si es un usaurio normal y con el rfc si es una veterinaria,
+    "phone": "3143386885",
+    ...
+}
+
+```
+
+### 4. Eliminar usuarios
+
+- **Endpoint:** `POST /deleteUser/:id`
+- **Descripción:** Eliminar un usuario
+- **Parámetros del cuerpo de la solicitud:**
+
+```json
+    
+{
+    "rfc": "" vacio si es un usaurio normal y con el rfc si es una veterinaria
+}
+
+```
+
+
+
+### 5. Listar usuarios
 
 - **Endpoint:** `GET /getUsers`
 - **Descripción:** Listar usuarios de veterinarias y usuarios.
