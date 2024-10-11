@@ -1,7 +1,10 @@
+// src/index.js
+
 require('dotenv').config();
 const app = require("./app");
 
-app.listen(process.env.PORT || 3000, () => {
-    console.log(`Servidor corriendo en el puerto ${process.env.PORT}`);
-});
+const port = process.env.PORT || 3000;
 
+app.listen(port, '0.0.0.0', () => {
+    console.log(`Servidor corriendo en el puerto ${port}`);
+});
