@@ -1,3 +1,5 @@
+// src/controllers/user.controllers.js
+
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const bcrypt = require('bcrypt');
@@ -199,6 +201,17 @@ const listUsers = async (req, res) => {
     }
 };
 
+const listVeterinaries = async (req, res) => {
+    try {
+        const veterinaries = await prisma.veterinary.findMany();
+        res.json({ veterinaries });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: 'Error al obtener las veterinarias' });
+    }
+};
+
+
 const deleteUser = async (req, res) => {
     const { id } = req.params;
     const {rfc} = req.body;
@@ -222,4 +235,4 @@ const deleteUser = async (req, res) => {
 
 };
 
-module.exports = { updateUser, createUser, listUsers, deleteUser,createVeterinary };
+module.exports = { updateUser, createUser, listUsers, listVeterinaries, deleteUser, createVeterinary };
