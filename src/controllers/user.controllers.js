@@ -222,4 +222,14 @@ const deleteUser = async (req, res) => {
 
 };
 
-module.exports = { updateUser, createUser, listUsers, deleteUser,createVeterinary };
+const listVeterinaries = async (req, res) => {
+    try {
+        const veterinaries = await prisma.veterinary.findMany();
+        res.json({ veterinaries });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: 'Error al obtener las veterinarias' });
+    }
+};
+
+module.exports = { updateUser, createUser, listUsers, deleteUser, createVeterinary, listVeterinaries };

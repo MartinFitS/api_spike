@@ -1,7 +1,7 @@
 // src/routes/users.routes.js
 
 const {Router} = require("express");
-const { updateUser, createUser, listUsers, deleteUser ,createVeterinary} = require("../controllers/user.controllers");
+const { updateUser, createUser, listUsers, deleteUser ,createVeterinary, listVeterinaries } = require("../controllers/user.controllers");
 const verifyTokenFromBody = require("../middlewares/verifyTokenFromBody")
 
 const router = Router();
@@ -12,7 +12,8 @@ router.get("/", (req,res) => {
 router.post("/createUser",createUser);
 router.post("/createVeterinary", createVeterinary);
 router.post("/deleteUser/:id",verifyTokenFromBody,deleteUser);
-router.get("/getUsers",verifyTokenFromBody,listUsers);
+router.post("/getUsers",verifyTokenFromBody,listUsers);
 router.post("/updateUser/:id",updateUser);
+router.post("/getVeterinaries", verifyTokenFromBody, listVeterinaries);
 
 module.exports = router;
