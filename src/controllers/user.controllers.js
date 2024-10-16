@@ -5,7 +5,7 @@ const bcrypt = require('bcrypt');
 const createUser = async (req, res) => {
     const { firstName, lastName, email, phone, password, role, city, number_int, cp } = req.body;
 
-    const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[-_!¡?¿:@$!%*?&])[A-Za-z\d-_!¡?¿:@$!%*?&]{8,}$/;
     const phoneRegex = /^\d{10}$/;
 
     try {
@@ -66,7 +66,7 @@ const createUser = async (req, res) => {
 const createVeterinary = async (req, res) => {
     const { veterinarieName, street, email, phone, password, role, city, locality, cologne, number_int, cp, rfc } = req.body;
 
-    const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[-_!¡?¿:@$!%*?&])[A-Za-z\d-_!¡?¿:@$!%*?&]{8,}$/;
     const rfcRegex = /^[A-Z]{3}\d{6}[A-Z0-9]{3}$/;
     const phoneRegex = /^\d{10}$/;
 
@@ -136,7 +136,7 @@ const updateUser = async (req, res) => {
     try {
         const { id } = req.params;
         const { rfc, number_int, cp, city, phone, street, email, password, locality, cologne } = req.body;
-        const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+        const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[-_!¡?¿:@$!%*?&])[A-Za-z\d-_!¡?¿:@$!%*?&]{8,}$/;
         
         if (!passwordRegex.test(password)) {
             return res.status(400).json({ 
