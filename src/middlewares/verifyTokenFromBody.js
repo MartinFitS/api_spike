@@ -11,6 +11,11 @@
             return res.status(403).json({ message: 'Token requerido' });
         }
 
+        if (!process.env.SECRET) {
+            return res.status(500).json({ message: 'Secreto no configurado' });
+        }
+        
+
         try {
 
             const decoded = jwt.verify(token, process.env.SECRET);
