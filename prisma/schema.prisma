@@ -28,8 +28,9 @@ model User {
   password   String
   role       Role
   city       String    
-  number_int Int
-  cp         Int
+  number_int String
+  cp         String
+  img        String
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
 
@@ -48,14 +49,31 @@ model Veterinary {
   city       String  
   locality   String  
   cologne    String
-  number_int Int
-  cp         Int
+  number_int String
+  cp         String
   rfc        String
+  img        String
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
 
   @@map("veterinarys")
   @@index([veterinarieName])
+}
+
+model Pet {
+  id         Int       @id @default(autoincrement())
+  id_owner  String
+  name String
+  gender String
+  weight Float
+  height String
+  animal String
+  img        String
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@map("pets")
+  @@index([name])
 }
 
 enum Role {

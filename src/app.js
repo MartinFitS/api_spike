@@ -6,6 +6,7 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const routerUsers = require("./routes/users.routes");
 const routerLogin = require("./routes/login.routes");
+const routerPet = require("./routes/pet.routes")
 
 const app = express();
 
@@ -27,5 +28,6 @@ app.use(helmet.contentSecurityPolicy({
 // Rutas
 app.use(routerLogin);
 app.use(routerUsers);
+app.use(routerPet);
 
 module.exports = app;
