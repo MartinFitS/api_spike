@@ -23,6 +23,7 @@ API Spike para la gestión de veterinarias, que permite crear y administrar dato
 - **Endpoint:** `POST /createUser`
 - **Descripción:** Crea un nuevo usuario en la base de datos.
 - **Parámetros del cuerpo de la solicitud:**
+- **FORMDATA!!!!**
 
 ```json
     
@@ -36,7 +37,6 @@ API Spike para la gestión de veterinarias, que permite crear y administrar dato
     "city": "New York",
     "number_int": 45,
     "cp": 10002,
-    "token": "asdasd.."
 }
 
 ```
@@ -45,6 +45,7 @@ API Spike para la gestión de veterinarias, que permite crear y administrar dato
 - **Endpoint:** `POST /createVeterinary`
 - **Descripción:** Crea una nueva veterinaria en la base de datos.
 - **Parámetros del cuerpo de la solicitud:**
+- **FORMDATA!!!!**
 
 ```json
     
@@ -61,6 +62,7 @@ API Spike para la gestión de veterinarias, que permite crear y administrar dato
     "number_int": 42,
     "cp": 10001,
     "rfc": "ABC123456789",
+    "img": (png,jpg,jpeg),
      "token": "asdasd.."
 }
 
@@ -125,4 +127,26 @@ API Spike para la gestión de veterinarias, que permite crear y administrar dato
     }  
 
 ```
+
+
+### 5. Crear una pet
+
+- **Endpoint:** `POST /createpet`
+- **Descripción:** Crear una mascota.
+- **Parámetros del cuerpo de la solicitud:**
+- **FORMDATA!!!**
+```json
+    {
+        "id_owner": "1000", (Tiene que existir un usuario con ese id)
+        "name": "Mechitas",
+        "gender": "1",  (0 = masculino, 1 = femenino)
+        "weight": 5.8,
+        "height": "1", (1 = pequeño, 2 = mediano, 3 = grande, 4 = gigante)
+        "animal": "1", (1 = Perro, 2 = gato, 3 = conejo, 4 = aves, 5 = reptiles, 6 = otros)
+        "img": (png,jpg,jpeg),
+    }
+
+```
+
+
 
