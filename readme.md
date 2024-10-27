@@ -37,6 +37,7 @@ API Spike para la gestión de veterinarias, que permite crear y administrar dato
     "city": "New York",
     "number_int": 45,
     "cp": 10002,
+    "img": (png,jpg,jpeg),
 }
 
 ```
@@ -63,7 +64,8 @@ API Spike para la gestión de veterinarias, que permite crear y administrar dato
     "cp": 10001,
     "rfc": "ABC123456789",
     "img": (png,jpg,jpeg),
-     "token": "asdasd.."
+     "token": "asdasd..",
+     "category": "CARE"
 }
 
 ```
@@ -74,13 +76,25 @@ API Spike para la gestión de veterinarias, que permite crear y administrar dato
 - **Endpoint:** `POST /updateUser/:id`
 - **Descripción:** Editar un usuario
 - **Parámetros del cuerpo de la solicitud:**
+- **FORMDATA!!!**
 
 ```json
     
 {
+
+    "phone": "3143386885",
+     "token": "asdasd..",
+        "img": imagen jpeg, png o jpeg
+    ...
+}
+
+{
     "rfc": "" vacio si es un usaurio normal y con el rfc si es una veterinaria,
     "phone": "3143386885",
-     "token": "asdasd.."
+     "token": "asdasd..",
+     "removeCategories": "" opciones["CARE", "NUTRITION", "RECREATION"],
+     "newCategories": "",
+     "img": imagen jpeg, png o jpeg
     ...
 }
 

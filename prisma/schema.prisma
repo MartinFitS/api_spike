@@ -30,7 +30,8 @@ model User {
   city       String    
   number_int String
   cp         String
-  img        String
+  img        String?
+  img_public_id  String?
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
 
@@ -52,7 +53,9 @@ model Veterinary {
   number_int String
   cp         String
   rfc        String
-  img        String
+  category       Categories[] 
+  img        String?
+  img_public_id  String?
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
 
@@ -68,7 +71,9 @@ model Pet {
   weight Float
   height String
   animal String
-  img        String
+  age Int
+  img        String?
+  img_public_id  String?
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
 
@@ -80,4 +85,10 @@ enum Role {
   ADMIN
   VETERINARY_OWNER
   PET_OWNER
+}
+
+enum Categories {
+  NUTRITION
+  RECREATION
+  CARE
 }
