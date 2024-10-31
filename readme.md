@@ -65,7 +65,11 @@ API Spike para la gestión de veterinarias, que permite crear y administrar dato
     "rfc": "ABC123456789",
     "img": (png,jpg,jpeg),
      "token": "asdasd..",
-     "category": "CARE"
+     "category": "CARE",
+     "horaInicio": "9",
+     "horaFin": "22",
+     "diasSemana": "Sunday",
+     "diasSemana": "Monday"
 }
 
 ```

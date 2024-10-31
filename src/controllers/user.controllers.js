@@ -118,12 +118,19 @@ const createVeterinary = async (req, res) => {
             return res.status(500).json({ error: 'Error al cargar la imagen' });
         }
 
-        const { veterinarieName, street, email, phone, password, role, city, locality, cologne, number_int, cp, rfc, category } = req.body;
+        const { 
+            veterinarieName, street, email, phone, password, role, city, locality, cologne, 
+            number_int, cp, rfc, category, horaInicio, horaFin, diasSemana 
+        } = req.body;
+        
         const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[-_!¡?¿:@$!%*?&])[A-Za-z\d-_!¡?¿:@$!%*?&]{8,}$/;
         const rfcRegex = /^[A-Z]{3}\d{6}[A-Z0-9]{3}$/;
         const phoneRegex = /^\d{10}$/;
+        const validCategories = ["NUTRITION", "RECREATION", "CARE"];
+        const validDias = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
         try {
+            // Validaciones iniciales
             if (role !== "VETERINARY_OWNER") {
                 return res.status(400).json({ error: 'El rol debe ser "VETERINARY_OWNER"' });
             }
@@ -141,6 +148,10 @@ const createVeterinary = async (req, res) => {
             if (!phoneRegex.test(phone)) {
                 return res.status(400).json({ error: 'El número telefónico debe tener 10 dígitos.' });
             }
+
+            const emailExists = await prisma.veterinary.findUnique({
+                where: { email }
+            });
 
             if (emailExists) {
                 return res.status(400).json({ error: 'El correo ya está registrado en la bd' });
@@ -177,39 +188,50 @@ const createVeterinary = async (req, res) => {
 
             const hashedPassword = await bcrypt.hash(password, 10);
 
-            // Validar la categoría (debe ser un array y cada valor debe estar en el enum `Categories`)
-            const validCategories = ["NUTRITION", "RECREATION", "CARE"];
-            const categoryArray = Array.isArray(category) ? category : [category]; // Asegura que siempre sea un array
-
+            const categoryArray = Array.isArray(category) ? category : [category];
             for (let cat of categoryArray) {
                 if (!validCategories.includes(cat)) {
                     return res.status(400).json({ error: `Categoría inválida: ${cat}. Las categorías válidas son: ${validCategories.join(", ")}` });
                 }
             }
 
-            // Subir la imagen a Cloudinary (si se envió una imagen)
+            const horaInicioNum = parseInt(horaInicio, 10);
+            const horaFinNum = parseInt(horaFin, 10);
+            if (
+                isNaN(horaInicioNum) || 
+                isNaN(horaFinNum) || 
+                horaInicioNum < 0 || 
+                horaFinNum > 23 || 
+                horaInicioNum >= horaFinNum
+            ) {
+                return res.status(400).json({ error: 'Horas de inicio o fin inválidas. Deben estar entre 0 y 23, y la hora de inicio debe ser menor que la hora de fin.' });
+            }
+
+            const diasArray = Array.isArray(diasSemana) ? diasSemana : [diasSemana];
+            for (let dia of diasArray) {
+                if (!validDias.includes(dia)) {
+                    return res.status(400).json({ error: `Día inválido: ${dia}. Los días válidos son: ${validDias.join(", ")}` });
+                }
+            }
+
             let imgUrl = null;
             let imgPublicId = null;
             if (req.file) {
                 try {
                     const uploadResponse = await new Promise((resolve, reject) => {
                         cloudinary.uploader.upload_stream({ folder: 'veterinarias' }, (error, result) => {
-                            if (error) {
-                                console.error('Error al subir imagen a Cloudinary:', error);
-                                reject(error);
-                            } else {
-                                resolve(result);
-                            }
+                            if (error) reject(error);
+                            else resolve(result);
                         }).end(req.file.buffer);
                     });
                     imgUrl = uploadResponse.secure_url;
-                    imgPublicId = uploadResponse.public_id; // Guardar el `public_id` de la imagen
+                    imgPublicId = uploadResponse.public_id;
                 } catch (error) {
                     return res.status(500).json({ error: `Error al subir imagen a Cloudinary: ${error.message || error}` });
                 }
             }
 
-            // Crear el registro de la veterinaria en la base de datos con `img`, `img_public_id`, y `category`
+            // Crear el registro de la veterinaria en la base de datos
             const newVeterinarie = await prisma.veterinary.create({
                 data: {
                     veterinarieName,
@@ -224,13 +246,32 @@ const createVeterinary = async (req, res) => {
                     number_int,
                     cp,
                     rfc,
-                    img: imgUrl || 'default-image-url', // Usa una URL predeterminada si no se sube una imagen
-                    img_public_id: imgPublicId || null,   // Guarda el `public_id` de la imagen o null si no se sube
-                    category: categoryArray               // Guarda el array de categorías
+                    img: imgUrl || 'default-image-url',
+                    img_public_id: imgPublicId || null,
+                    category: categoryArray
                 }
             });
 
-            res.status(201).json({ message: "Veterinaria creada correctamente", newVeterinarie });
+            // Generar horarios disponibles basados en horaInicio y horaFin del cuerpo de la solicitud y los días especificados
+            const horarios = [];
+            
+            for (const dia of diasArray) {
+                for (let hora = horaInicioNum; hora < horaFinNum; hora++) {
+                    const horaFormato = `${hora.toString().padStart(2, '0')}:00`;
+                    horarios.push({
+                        hour: horaFormato,
+                        day: dia,
+                        veterinaryId: newVeterinarie.id
+                    });
+                }
+            }
+
+            // Guardar los horarios en la base de datos
+            await prisma.availableHour.createMany({
+                data: horarios
+            });
+
+            res.status(201).json({ message: "Veterinaria creada correctamente con horarios disponibles", newVeterinarie });
 
         } catch (e) {
             console.error(e);
@@ -238,6 +279,8 @@ const createVeterinary = async (req, res) => {
         }
     });
 };
+
+
 
 
 const updateUser = async (req, res) => {

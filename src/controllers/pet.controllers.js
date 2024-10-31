@@ -12,35 +12,41 @@ const createPet = async (req, res) => {
             return res.status(500).json({ error: 'Error al cargar la imagen' });
         }
   
-        const { id_owner, name, gender, weight, height, animal, age } = req.body;
+        const { ownerId, name, gender, weight, height, animal, age } = req.body;
   
         try {
-            const ownerId = parseInt(id_owner, 10);
-            const ageNumber = parseInt(age, 10)
-            if (isNaN(ownerId)) {
-                return res.status(400).json({ error: 'id_owner debe ser un número' });
+            // Convertir ownerId y age a números
+            const parsedOwnerId = parseInt(ownerId, 10);
+            const parsedAge = parseInt(age, 10);
+
+            // Validar que ownerId y age son números válidos
+            console.log(parsedOwnerId)
+
+            if (isNaN(parsedOwnerId)) {
+                return res.status(400).json({ error: 'ownerId debe ser un número' });
+            }
+            if (isNaN(parsedAge)) {
+                return res.status(400).json({ error: 'age debe ser un número' });
             }
   
+            // Verificar que el propietario exista
             const ownerExists = await prisma.user.findUnique({
-                where: { id: ownerId }
+                where: { id: parsedOwnerId }
             });
   
             if (!ownerExists) {
                 return res.status(404).json({ error: "Owner not found" });
             }
   
+            // Subir la imagen a Cloudinary (si se envió una imagen)
             let imgUrl = null;
             let imgPublicId = null;
             if (req.file) {
                 try {
                     const uploadResponse = await new Promise((resolve, reject) => {
                         cloudinary.uploader.upload_stream({ folder: 'mascotas' }, (error, result) => {
-                            if (error) {
-                                console.error('Error al subir imagen a Cloudinary:', error);
-                                reject(error);
-                            } else {
-                                resolve(result);
-                            }
+                            if (error) reject(error);
+                            else resolve(result);
                         }).end(req.file.buffer);
                     });
                     imgUrl = uploadResponse.secure_url;
@@ -50,17 +56,18 @@ const createPet = async (req, res) => {
                 }
             }
   
+            // Crear la nueva mascota y asociarla al propietario existente
             const newPet = await prisma.pet.create({
                 data: {
-                    id_owner,
+                    ownerId: parsedOwnerId,
                     name,
                     gender,
                     weight: parseFloat(weight),
-                    height, 
+                    height,
                     animal,
-                    age: ageNumber,
-                    img: imgUrl || 'default-image-url', 
-                    img_public_id: imgPublicId || null, 
+                    age: parsedAge,
+                    img: imgUrl || 'default-image-url',
+                    img_public_id: imgPublicId || null,
                 }
             });
   
@@ -70,7 +77,7 @@ const createPet = async (req, res) => {
             res.status(500).json({ error: "An error occurred while creating the pet" });
         }
     });
-  };
+};
 
 const getPets = async (req, res) => {
     try {
