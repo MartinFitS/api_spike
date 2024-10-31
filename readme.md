@@ -166,5 +166,23 @@ API Spike para la gestión de veterinarias, que permite crear y administrar dato
 
 ```
 
+### 5. Crear una pet
+
+- **Endpoint:** `POST /crearCita`
+- **Descripción:** Crear una mascota.
+- **Parámetros del cuerpo de la solicitud:**
+- **FORMDATA!!!**
+
+```json
+
+    {
+        "veterinaryId": 1,
+        "petId": 1,
+        "userId": 1,
+        "date": "2024-11-04T00:00:00.000Z",
+        "hour": "10:00"
+    }
+
+```
 
 
