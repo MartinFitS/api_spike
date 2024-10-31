@@ -31,9 +31,12 @@ const crearCita = async (req, res) => {
             return res.status(403).json({ error: 'La mascota no pertenece al usuario' });
         }
 
-        // Convertir la fecha a un objeto Date
+        // Convertir la fecha a la zona horaria local y obtener el día de la semana
         const appointmentDate = new Date(date);
-        const dayOfWeek = appointmentDate.toLocaleString('en-US', { weekday: 'long' }); // Obtener el día de la semana en inglés
+        const localAppointmentDate = new Date(appointmentDate.getTime() + appointmentDate.getTimezoneOffset() * 60000);
+        const dayOfWeek = localAppointmentDate.toLocaleDateString('en-US', { weekday: 'long' });
+
+        console.log(`Veterinary ID: ${veterinaryId}, Day: ${dayOfWeek}, Hour: ${hour}`);
 
         // Verificar que el horario esté disponible en `AvailableHour`
         const horarioDisponible = await prisma.availableHour.findFirst({
@@ -53,7 +56,7 @@ const crearCita = async (req, res) => {
             where: {
                 veterinaryId: veterinaryId,
                 date: appointmentDate,
-                hourId: horarioDisponible.id // Utiliza el `id` de `AvailableHour`
+                hourId: horarioDisponible.id
             }
         });
 
@@ -68,7 +71,7 @@ const crearCita = async (req, res) => {
                 petId: petId,
                 userId: userId,
                 date: appointmentDate,
-                hourId: horarioDisponible.id // Relacionar con el horario disponible
+                hourId: horarioDisponible.id
             }
         });
 
