@@ -5,6 +5,7 @@ const multer = require('multer');
 const storage = multer.memoryStorage();
 const upload = multer({ storage }).single('img');
 const cloudinary = require('../utils/cloudinary'); 
+const hunterClient = require('../utils/hunter');
 
 const createUser = async (req, res) => {
     upload(req, res, async function (err) {
@@ -13,7 +14,7 @@ const createUser = async (req, res) => {
         }
 
         const { firstName, lastName, email, phone, password, role, city, number_int, cp } = req.body;
-        const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[-_!¡?¿:@$!%*?&])[A-Za-z\d-_!¡?¿:@$!%*?&]{8,}$/;
+        const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+[\]{};':"\\|,.<>/?])[A-Za-z\d!@#$%^&*()_+[\]{};':"\\|,.<>/?]{8,}$/;
         const phoneRegex = /^\d{10}$/;
 
         try {
@@ -28,10 +29,30 @@ const createUser = async (req, res) => {
                     error: 'La contraseña debe tener al menos 8 caracteres, incluir una mayúscula, un número y un símbolo especial'
                 });
             }
-
             const emailExists = await prisma.user.findUnique({ where: { email } });
             if (emailExists) {
-                return res.status(400).json({ error: 'El correo ya está en uso' });
+                return res.status(400).json({ error: 'El correo ya está registrado en la bd' });
+            }
+
+            try {
+                const emailVerification = await hunterClient.verifyEmail(email);
+                if (!emailVerification.data || emailVerification.data.status !== 'valid') {
+                    return res.status(400).json({ 
+                        error: 'Email inválido',
+                        details: {
+                            message: 'La verificación del email falló',
+                            emailChecked: email,
+                        }
+                    });
+                }
+            } catch (hunterError) {
+                return res.status(500).json({
+                    error: 'Error en verificación de email',
+                    details: {
+                        message: 'Error al verificar el email con Hunter',
+                        emailChecked: email,
+                    }
+                });
             }
 
             const phoneExists = await prisma.user.findFirst({ where: { phone } });
@@ -121,12 +142,29 @@ const createVeterinary = async (req, res) => {
                 return res.status(400).json({ error: 'El número telefónico debe tener 10 dígitos.' });
             }
 
-            const emailExists = await prisma.veterinary.findUnique({
-                where: { email }
-            });
-
             if (emailExists) {
-                return res.status(400).json({ error: 'El correo ya está en uso' });
+                return res.status(400).json({ error: 'El correo ya está registrado en la bd' });
+            }
+
+            try {
+                const emailVerification = await hunterClient.verifyEmail(email);
+                if (!emailVerification.data || emailVerification.data.status !== 'valid') {
+                    return res.status(400).json({ 
+                        error: 'Email inválido',
+                        details: {
+                            message: 'La verificación del email falló',
+                            emailChecked: email,
+                        }
+                    });
+                }
+            } catch (hunterError) {
+                return res.status(500).json({
+                    error: 'Error en verificación de email',
+                    details: {
+                        message: 'Error al verificar el email con Hunter',
+                        emailChecked: email,
+                    }
+                });
             }
 
             const phoneExists = await prisma.veterinary.findFirst({
