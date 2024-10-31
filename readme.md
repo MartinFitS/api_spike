@@ -166,10 +166,10 @@ API Spike para la gestión de veterinarias, que permite crear y administrar dato
 
 ```
 
-### 5. Crear una pet
+### 5. Crear una Cita
 
 - **Endpoint:** `POST /crearCita`
-- **Descripción:** Crear una mascota.
+- **Descripción:** Crear una cita.
 - **Parámetros del cuerpo de la solicitud:**
 - **FORMDATA!!!**
 
