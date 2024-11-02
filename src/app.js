@@ -8,6 +8,7 @@ const routerUsers = require("./routes/users.routes");
 const routerLogin = require("./routes/login.routes");
 const routerPet = require("./routes/pet.routes");
 const routerAppointment = require("./routes/appoinments.routes");
+const routerVerification = require("./routes/verification.routes");
 
 const app = express();
 
@@ -31,5 +32,6 @@ app.use(routerLogin);
 app.use(routerUsers);
 app.use(routerPet);
 app.use(routerAppointment);
+app.use(routerVerification);
 
 module.exports = app;
