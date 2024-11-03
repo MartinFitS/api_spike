@@ -6,6 +6,8 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage }).single('img');
 const cloudinary = require('../utils/cloudinary'); 
 const hunterClient = require('../utils/hunter');
+const jwt = require('jsonwebtoken');
+const { sendVerificationEmail } = require('../utils/mailer');
 
 const createUser = async (req, res) => {
     upload(req, res, async function (err) {
@@ -100,14 +102,17 @@ const createUser = async (req, res) => {
                     cp,
                     img: imgUrl || 'default-image-url',      // Usa una URL predeterminada si no hay imagen
                     img_public_id: imgPublicId || null,       // Guarda el public_id de la imagen o null si no hay imagen
+                    isActive: false
                 }
             });
 
-            res.status(201).json({ message: "Usuario creado correctamente", newUser });
+            const token = jwt.sign({ userId: newUser.id }, process.env.SECRET, { expiresIn: '10m' });
+            await sendVerificationEmail(email, token);
+            res.status(201).json({ message: "Usuario creado correctamente. Por favor verifica tu correo", newUser });
 
         } catch (e) {
             console.error(e);
-            res.status(500).json({ error: 'Error al crear usuario' });
+            res.status(500).json({ error: 'Error al crear usuario', e });
         }
     });
 };
