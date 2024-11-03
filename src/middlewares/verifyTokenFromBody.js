@@ -5,7 +5,11 @@
     require('dotenv').config();
 
     const verifyTokenFromBody = (req, res, next) => {
-        const { token } = req.body;
+        const token = 
+            req.body.token || 
+            req.query.token || 
+            req.headers['x-access-token'] ||
+            req.headers['authorization']?.split(' ')[1];
 
         if (!token) {
             return res.status(403).json({ message: 'Token requerido' });
