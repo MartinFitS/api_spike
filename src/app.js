@@ -12,10 +12,8 @@ const routerVerification = require("./routes/verification.routes");
 
 const app = express();
 
-// Middleware para parsear JSON
 app.use(express.json());
 
-// Configuración de Helmet con CSP
 app.use(helmet.contentSecurityPolicy({
   directives: {
     defaultSrc: ["'self'"],
