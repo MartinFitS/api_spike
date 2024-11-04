@@ -2,8 +2,7 @@
 
 const express = require('express');
 const helmet = require('helmet'); // Importa Helmet
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const path = require('path');
 const routerUsers = require("./routes/users.routes");
 const routerLogin = require("./routes/login.routes");
 const routerPet = require("./routes/pet.routes");
@@ -11,6 +10,12 @@ const routerAppointment = require("./routes/appoinments.routes");
 const routerVerification = require("./routes/verification.routes");
 
 const app = express();
+
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
+
+app.use(express.static(path.join(__dirname, 'public')));
+
 
 app.use(express.json());
 
