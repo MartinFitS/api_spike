@@ -5,17 +5,23 @@ const verifyEmail = async (req, res) => {
     const { user } = req;
 
     try {
-        await prisma.user.update({
+        const existingUser = await prisma.user.findUnique({
             where: { id: user.userId },
-            data: { isActive: true }
         });
 
-        res.status(200).json({ message: 'Correo verificado correctamente. Tu cuenta está ahora activa.' });
-        console.log('Correo verificado correctamente. Tu cuenta está ahora activa.');
+        if (!existingUser) {
+            return res.status(404).render('error', { message: 'Usuario no encontrado.' });
+        }
+
+        await prisma.user.update({
+            where: { id: user.userId },
+            data: { isActive: true },
+        });
+
+        res.status(200).render('verifyEmail');
     } catch (e) {
         console.error(e);
-        res.status(400).json({ error: 'Error al verificar el correo.' });
-        console.log('Error al verificar el correo.');
+        res.status(400).render('error', { message: 'Error al verificar el correo.' });
     }
 };
 
@@ -27,13 +33,12 @@ const deleteUser = async (req, res) => {
             where: { id: user.userId }
         });
 
-        res.status(200).json({ message: 'Cuenta eliminada correctamente.' });
-        console.log('Cuenta eliminada correctamente.');
+        res.status(200).render('deleteUser');
     } catch (e) {
         console.error(e);
-        res.status(400).json({ error: 'Error al eliminar la cuenta.' });
-        console.log('Error al eliminar la cuenta.');
+        res.status(400).render('error', { message: 'Error al eliminar la cuenta.' });
     }
 };
+
 
 module.exports = { verifyEmail, deleteUser };
