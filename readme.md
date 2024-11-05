@@ -155,15 +155,15 @@ API Spike para la gestión de veterinarias, que permite crear y administrar dato
 - **FORMDATA!!!**
 ```json
     {
-        "id_owner": "1000", (Tiene que existir un usuario con ese id)
-        "name": "Mechitas",
-        "gender": "1",  (0 = masculino, 1 = femenino)
-        "weight": 5.8,
+        "ownerId": 123,(Tiene que existir un usuario con ese id)
+        "name": "Firulais",
+        "gender": "0",(0 = masculino, 1 = femenino)
+        "weight": "12.5",
         "height": "1", (1 = pequeño, 2 = mediano, 3 = grande, 4 = gigante)
-        "animal": "1", (1 = Perro, 2 = gato, 3 = conejo, 4 = aves, 5 = reptiles, 6 = otros)
-        "img": (png,jpg,jpeg),
+        "animal":  "1", (1 = Perro, 2 = gato, 3 = conejo, 4 = aves, 5 = reptiles, 6 = otros)
+        "age": 3,
+        "img": file
     }
-
 ```
 
 ### 5. Crear una Cita

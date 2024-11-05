@@ -82,6 +82,48 @@ const crearCita = async (req, res) => {
     }
 };
 
+const cancelarCita = async (req, res) => {
+    try {
+        const { appointmentId } = req.body;
+
+        const cita = await prisma.appointment.findUnique({
+            where: { id: appointmentId },
+            include: { hour: true } 
+        });
+
+        if (!cita) {
+            return res.status(404).json({ message: 'Cita no encontrada' });
+        }
+
+        const fechaCita = new Date(cita.date);
+        const fechaActual = new Date();
+        const diferenciaDias = Math.ceil((fechaCita - fechaActual) / (1000 * 60 * 60 * 24));
+
+        if (diferenciaDias < 3) {
+            return res.status(400).json({ message: 'La cita solo se puede cancelar con al menos 3 días de anticipación' });
+        }
+        await prisma.appointment.delete({
+            where: { id: appointmentId }
+        });
+
+        res.status(200).json({ message: 'Cita cancelada exitosamente y el horario ha sido reabierto' });
+
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ message: 'Error en el servidor' });
+    }
+};
+
+const completadaCita = async(req,res) => {
+    try{
+
+    }catch(e){
+        console.error(e)
+    }
+}
+
 module.exports = {
-    crearCita
+    crearCita,
+    cancelarCita,
+    completadaCita
 };

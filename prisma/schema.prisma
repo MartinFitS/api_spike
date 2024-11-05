@@ -99,6 +99,7 @@ model Appointment {
   date          DateTime
   hour          AvailableHour @relation(fields: [hourId], references: [id])
   hourId        Int
+  done          Boolean    @default(false)
   createdAt     DateTime   @default(now())
 
   // Restricción única para evitar citas duplicadas el mismo día y hora en una veterinaria específica
