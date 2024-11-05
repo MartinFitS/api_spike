@@ -115,10 +115,26 @@ const cancelarCita = async (req, res) => {
 };
 
 const completadaCita = async(req,res) => {
-    try{
+    try {
+        const { appointmentId } = req.body;
 
-    }catch(e){
-        console.error(e)
+        const cita = await prisma.appointment.findUnique({
+            where: { id: appointmentId }
+        });
+
+        if (!cita) {
+            return res.status(404).json({ message: 'Cita no encontrada' });
+        }
+
+        const citaActualizada = await prisma.appointment.update({
+            where: { id: appointmentId },
+            data: { done: true }
+        });
+
+        res.status(200).json({ message: 'Cita marcada como realizada', cita: citaActualizada });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ message: 'Error en el servidor' });
     }
 }
 

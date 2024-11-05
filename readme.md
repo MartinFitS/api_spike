@@ -16,6 +16,10 @@ npx prisma migrate dev --name init
 
 API Spike para la gestión de veterinarias, que permite crear y administrar datos relacionados con clínicas veterinarias.
 
+# URL api
+
+https://api-spikeapp.vercel.app/
+
 ## Endpoints
 
 ### 1. Crear Usuario
@@ -171,7 +175,6 @@ API Spike para la gestión de veterinarias, que permite crear y administrar dato
 - **Endpoint:** `POST /crearCita`
 - **Descripción:** Crear una cita.
 - **Parámetros del cuerpo de la solicitud:**
-- **FORMDATA!!!**
 
 ```json
 
@@ -184,5 +187,34 @@ API Spike para la gestión de veterinarias, que permite crear y administrar dato
     }
 
 ```
+
+### 6. Cancelar Cita
+
+- **Endpoint:** `POST /cancelarCita`
+- **Descripción:** Cancelar una cita.
+- **Parámetros del cuerpo de la solicitud:**
+
+```json
+
+    {
+        "appointmentId": 1
+    }
+
+```
+
+### 7. Marcar Cita como completada
+
+- **Endpoint:** `POST /citaCompletada`
+- **Descripción:** Marcar como completada una cita.
+- **Parámetros del cuerpo de la solicitud:**
+
+```json
+
+    {
+        "appointmentId": 1
+    }
+
+```
+
 
 
