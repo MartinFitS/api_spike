@@ -92,7 +92,7 @@ const getPets = async (req, res) => {
       }
 
       const pets = await prisma.pet.findMany({
-        where: { id_owner: id }
+        where: { ownerId: id }
       });
   
       res.status(200).json(pets);
