@@ -537,8 +537,6 @@ const updateVeterinary = async (req, res) => {
 };
 
 
-
-
 const listUsers = async (req, res) => {
     try {
         const users = await prisma.user.findMany();
@@ -585,4 +583,48 @@ const listVeterinaries = async (req, res) => {
     }
 };
 
-module.exports = { updateUser, createUser, listUsers, deleteUser, createVeterinary, listVeterinaries,updateVeterinary };
+const getVeterinary = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        console.log(id)
+
+        // Convertir el id a un entero
+        const veterinary = await prisma.veterinary.findUnique({
+            where: { id: parseInt(id, 10) },
+            include: {
+                availableHours: true,  // Incluir horarios disponibles
+                appointments: true     // Incluir citas
+            }
+        });
+
+        // Verificar si la veterinaria existe
+        if (!veterinary) {
+            return res.status(404).json({ message: 'Veterinaria no encontrada' });
+        }
+
+        // Procesar `availableHours` para calcular `hora_ini`, `hora_fin` y `dias`
+        const hours = veterinary.availableHours.map(entry => entry.hour).sort();
+        const days = [...new Set(veterinary.availableHours.map(entry => entry.day))];
+
+        const hora_ini = hours[0];           // Hora de inicio
+        const hora_fin = hours[hours.length - 1]; // Hora de fin
+
+        // Estructurar la respuesta sin `availableHours`
+        const response = {
+            ...veterinary,
+            hora_ini,
+            hora_fin,
+            dias: days
+        };
+        delete response.availableHours;
+
+        res.status(200).json({ veterinary: response });
+
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ message: 'Error en el servidor' });
+    }
+};
+
+module.exports = { getVeterinary,updateUser, createUser, listUsers, deleteUser, createVeterinary, listVeterinaries,updateVeterinary };
