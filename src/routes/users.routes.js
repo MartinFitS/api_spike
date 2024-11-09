@@ -13,7 +13,7 @@ router.post("/createUser",createUser);
 router.post("/createVeterinary", createVeterinary);
 router.post("/deleteUser/:id",verifyTokenFromBody,deleteUser);
 router.post("/getUsers",verifyTokenFromBody,listUsers);
-router.post("/updateUser/:id",verifyTokenFromBody,updateUser);
+router.post("/updateUser/:id",updateUser);
 router.post("/getVeterinaries", verifyTokenFromBody, listVeterinaries);
 
 module.exports = router;
