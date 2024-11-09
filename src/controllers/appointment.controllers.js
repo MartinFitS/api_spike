@@ -146,7 +146,8 @@ const citasUsuario = async (req, res) => {
             where: { userId: ownerId },
             include: {
                 pet: true, 
-                hour: true 
+                hour: true,
+                user: true 
             }
         });
 
@@ -172,7 +173,8 @@ const citasVet = async (req, res) => {
             where: { veterinaryId: vetId },
             include: {
                 pet: true, 
-                hour: true 
+                hour: true,
+                user: true 
             }
         });
 
