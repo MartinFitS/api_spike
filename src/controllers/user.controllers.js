@@ -393,6 +393,151 @@ const updateUser = async (req, res) => {
 };
 
 
+const updateVeterinary = async (req, res) => {
+    upload(req, res, async function (err) {
+        if (err) {
+            return res.status(500).json({ error: 'Error al cargar la imagen' });
+        }
+
+        const { id } = req.params;
+        const { 
+            rfc, password, token, newCategories, removeCategories, 
+            newAvailableHours, removeAvailableHours, horaInicio, horaFin, diasSemana, ...rest 
+        } = req.body;
+
+        const updateData = { ...rest };
+
+        try {
+            // Validación de contraseña
+            if (password) {
+                const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[-_!¡?¿:@$!%*?&])[A-Za-z\d-_!¡?¿:@$!%*?&]{8,}$/;
+                if (!passwordRegex.test(password)) {
+                    return res.status(400).json({
+                        error: 'La contraseña debe tener al menos 8 caracteres, incluir una mayúscula, un número y un símbolo especial'
+                    });
+                }
+                const hashedPassword = await bcrypt.hash(password, 10);
+                updateData.password = hashedPassword;
+            }
+
+            // Manejo de imagen
+            if (req.file) {
+                const existingUser = await prisma.veterinary.findUnique({
+                    where: { id: parseInt(id) },
+                    select: { img_public_id: true }
+                });
+
+                if (existingUser && existingUser.img_public_id) {
+                    await cloudinary.uploader.destroy(existingUser.img_public_id);
+                }
+
+                const uploadResponse = await new Promise((resolve, reject) => {
+                    cloudinary.uploader.upload_stream({ folder: 'veterinarias' }, (error, result) => {
+                        if (error) {
+                            console.error('Error al subir imagen a Cloudinary:', error);
+                            reject(error);
+                        } else {
+                            resolve(result);
+                        }
+                    }).end(req.file.buffer);
+                });
+
+                updateData.img = uploadResponse.secure_url;
+                updateData.img_public_id = uploadResponse.public_id;
+            }
+
+            // Manejo de categorías (agregar o eliminar)
+            if (newCategories || removeCategories) {
+                let categoriesToRemove = [];
+                let categoriesToAdd = [];
+                const validCategories = ["NUTRITION", "RECREATION", "CARE"];
+
+                if (removeCategories) {
+                    categoriesToRemove = typeof removeCategories === 'string' ? [removeCategories] : removeCategories;
+                    categoriesToRemove = categoriesToRemove.filter(cat => validCategories.includes(cat));
+                }
+
+                if (newCategories) {
+                    categoriesToAdd = typeof newCategories === 'string' ? [newCategories] : newCategories;
+                    categoriesToAdd = categoriesToAdd.filter(cat => validCategories.includes(cat));
+                }
+
+                const existingData = await prisma.veterinary.findUnique({
+                    where: { id: parseInt(id) },
+                    select: { category: true }
+                });
+
+                if (existingData) {
+                    const updatedCategories = [
+                        ...existingData.category.filter(cat => !categoriesToRemove.includes(cat)),
+                        ...categoriesToAdd.filter(cat => !existingData.category.includes(cat))
+                    ];
+                    updateData.category = updatedCategories;
+                }
+            }
+
+            // Validación y actualización de horarios
+            if (horaInicio || horaFin || diasSemana) {
+                // Verificar si existen citas pendientes
+                const pendingAppointments = await prisma.appointment.findMany({
+                    where: {
+                        veterinaryId: parseInt(id),
+                        done: false
+                    }
+                });
+
+                if (pendingAppointments.length > 0) {
+                    return res.status(400).json({
+                        error: 'No se pueden modificar los horarios porque hay citas pendientes.'
+                    });
+                }
+
+                // Eliminar horarios antiguos
+                await prisma.availableHour.deleteMany({
+                    where: { veterinaryId: parseInt(id) }
+                });
+
+                // Crear nuevos horarios si se especifican `horaInicio`, `horaFin`, y `diasSemana`
+                if (horaInicio && horaFin && diasSemana) {
+                    const horaInicioNum = parseInt(horaInicio, 10);
+                    const horaFinNum = parseInt(horaFin, 10);
+                    const diasArray = Array.isArray(diasSemana) ? diasSemana : [diasSemana];
+
+                    const horarios = [];
+
+                    for (const dia of diasArray) {
+                        for (let hora = horaInicioNum; hora < horaFinNum; hora++) {
+                            const horaFormato = `${hora.toString().padStart(2, '0')}:00`;
+                            horarios.push({
+                                hour: horaFormato,
+                                day: dia,
+                                veterinaryId: parseInt(id)
+                            });
+                        }
+                    }
+
+                    await prisma.availableHour.createMany({
+                        data: horarios
+                    });
+                }
+            }
+
+            // Actualizar otros datos de la veterinaria
+            await prisma.veterinary.update({
+                where: { id: parseInt(id) },
+                data: updateData
+            });
+
+            res.status(200).json({ message: "Veterinaria actualizada correctamente" });
+        } catch (e) {
+            console.error(e);
+            res.status(500).json({ error: 'Error al actualizar la veterinaria' });
+        }
+    });
+};
+
+
+
 
 const listUsers = async (req, res) => {
     try {
@@ -440,4 +585,4 @@ const listVeterinaries = async (req, res) => {
     }
 };
 
-module.exports = { updateUser, createUser, listUsers, deleteUser, createVeterinary, listVeterinaries };
+module.exports = { updateUser, createUser, listUsers, deleteUser, createVeterinary, listVeterinaries,updateVeterinary };
