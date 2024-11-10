@@ -116,6 +116,30 @@ const createUser = async (req, res) => {
         }
     });
 };
+// Función para generar el inicio del RFC basado en el nombre de la empresa según las reglas
+function generateRFCStart(name) {
+    const words = name.trim().split(' ').filter(word => !["de", "y", "la"].includes(word.toLowerCase()));
+    let initials = "";
+
+    if (words.length === 1) {
+        // Si hay una sola palabra, tomar las tres primeras letras (completando con "X" si es necesario)
+        initials = words[0].substring(0, 3).toUpperCase();
+        while (initials.length < 3) {
+            initials += 'X';
+        }
+    } else if (words.length === 2) {
+        // Si hay dos palabras, tomar la primera letra de la primera palabra y las dos primeras de la segunda
+        initials = (words[0][0] + words[1].substring(0, 2)).toUpperCase();
+    } else if (words.length === 3) {
+        // Si hay tres palabras, tomar la primera letra de cada una
+        initials = (words[0][0] + words[1][0] + words[2][0]).toUpperCase();
+    } else {
+        // Si hay cuatro o más palabras, tomar la primera letra de las primeras cuatro palabras
+        initials = (words[0][0] + words[1][0] + words[2][0] + words[3][0]).toUpperCase();
+    }
+
+    return initials;
+}
 
 const createVeterinary = async (req, res) => {
     upload(req, res, async function (err) {
@@ -146,8 +170,13 @@ const createVeterinary = async (req, res) => {
                 });
             }
 
-            if (!rfcRegex.test(rfc)) {
-                return res.status(400).json({ error: 'El RFC no es válido. Debe tener el formato de una persona moral.' });
+            // Validación del formato del RFC y su coincidencia con el nombre de la empresa
+            const expectedRFCStart = generateRFCStart(veterinarieName);
+
+            if (!rfcRegex.test(rfc) || rfc.substring(0, 3) !== expectedRFCStart) {
+                return res.status(400).json({ 
+                    error: `El RFC no es válido. Debe empezar con "${expectedRFCStart}" y seguir el formato correcto para una persona moral.` 
+                });
             }
 
             if (!phoneRegex.test(phone)) {
@@ -286,8 +315,6 @@ const createVeterinary = async (req, res) => {
 };
 
 
-
-
 const updateUser = async (req, res) => {
     upload(req, res, async function (err) {
         if (err) {
@@ -391,7 +418,6 @@ const updateUser = async (req, res) => {
         }
     });
 };
-
 
 const updateVeterinary = async (req, res) => {
     upload(req, res, async function (err) {
@@ -536,7 +562,6 @@ const updateVeterinary = async (req, res) => {
     });
 };
 
-
 const listUsers = async (req, res) => {
     try {
         const users = await prisma.user.findMany();
@@ -589,28 +614,24 @@ const getVeterinary = async (req, res) => {
 
         console.log(id)
 
-        // Convertir el id a un entero
         const veterinary = await prisma.veterinary.findUnique({
             where: { id: parseInt(id, 10) },
             include: {
-                availableHours: true,  // Incluir horarios disponibles
-                appointments: true     // Incluir citas
+                availableHours: true,  
+                appointments: true     
             }
         });
 
-        // Verificar si la veterinaria existe
         if (!veterinary) {
             return res.status(404).json({ message: 'Veterinaria no encontrada' });
         }
 
-        // Procesar `availableHours` para calcular `hora_ini`, `hora_fin` y `dias`
         const hours = veterinary.availableHours.map(entry => entry.hour).sort();
         const days = [...new Set(veterinary.availableHours.map(entry => entry.day))];
 
-        const hora_ini = hours[0];           // Hora de inicio
-        const hora_fin = hours[hours.length - 1]; // Hora de fin
+        const hora_ini = hours[0];          
+        const hora_fin = hours[hours.length - 1]; 
 
-        // Estructurar la respuesta sin `availableHours`
         const response = {
             ...veterinary,
             hora_ini,
