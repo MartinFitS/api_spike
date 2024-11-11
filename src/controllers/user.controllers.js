@@ -116,6 +116,30 @@ const createUser = async (req, res) => {
         }
     });
 };
+// Función para generar el inicio del RFC basado en el nombre de la empresa según las reglas
+function generateRFCStart(name) {
+    const words = name.trim().split(' ').filter(word => !["de", "y", "la"].includes(word.toLowerCase()));
+    let initials = "";
+
+    if (words.length === 1) {
+        // Si hay una sola palabra, tomar las tres primeras letras (completando con "X" si es necesario)
+        initials = words[0].substring(0, 3).toUpperCase();
+        while (initials.length < 3) {
+            initials += 'X';
+        }
+    } else if (words.length === 2) {
+        // Si hay dos palabras, tomar la primera letra de la primera palabra y las dos primeras de la segunda
+        initials = (words[0][0] + words[1].substring(0, 2)).toUpperCase();
+    } else if (words.length === 3) {
+        // Si hay tres palabras, tomar la primera letra de cada una
+        initials = (words[0][0] + words[1][0] + words[2][0]).toUpperCase();
+    } else {
+        // Si hay cuatro o más palabras, tomar la primera letra de las primeras cuatro palabras
+        initials = (words[0][0] + words[1][0] + words[2][0] + words[3][0]).toUpperCase();
+    }
+
+    return initials;
+}
 
 const createVeterinary = async (req, res) => {
     upload(req, res, async function (err) {
@@ -146,8 +170,13 @@ const createVeterinary = async (req, res) => {
                 });
             }
 
-            if (!rfcRegex.test(rfc)) {
-                return res.status(400).json({ error: 'El RFC no es válido. Debe tener el formato de una persona moral.' });
+            // Validación del formato del RFC y su coincidencia con el nombre de la empresa
+            const expectedRFCStart = generateRFCStart(veterinarieName);
+
+            if (!rfcRegex.test(rfc) || rfc.substring(0, 3) !== expectedRFCStart) {
+                return res.status(400).json({ 
+                    error: `El RFC no es válido. Debe empezar con "${expectedRFCStart}" y seguir el formato correcto para una persona moral.` 
+                });
             }
 
             if (!phoneRegex.test(phone)) {
@@ -286,8 +315,6 @@ const createVeterinary = async (req, res) => {
 };
 
 
-
-
 const updateUser = async (req, res) => {
     upload(req, res, async function (err) {
         if (err) {
@@ -392,7 +419,148 @@ const updateUser = async (req, res) => {
     });
 };
 
+const updateVeterinary = async (req, res) => {
+    upload(req, res, async function (err) {
+        if (err) {
+            return res.status(500).json({ error: 'Error al cargar la imagen' });
+        }
 
+        const { id } = req.params;
+        const { 
+            rfc, password, token, newCategories, removeCategories, 
+            newAvailableHours, removeAvailableHours, horaInicio, horaFin, diasSemana, ...rest 
+        } = req.body;
+
+        const updateData = { ...rest };
+
+        try {
+            // Validación de contraseña
+            if (password) {
+                const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[-_!¡?¿:@$!%*?&])[A-Za-z\d-_!¡?¿:@$!%*?&]{8,}$/;
+                if (!passwordRegex.test(password)) {
+                    return res.status(400).json({
+                        error: 'La contraseña debe tener al menos 8 caracteres, incluir una mayúscula, un número y un símbolo especial'
+                    });
+                }
+                const hashedPassword = await bcrypt.hash(password, 10);
+                updateData.password = hashedPassword;
+            }
+
+            // Manejo de imagen
+            if (req.file) {
+                const existingUser = await prisma.veterinary.findUnique({
+                    where: { id: parseInt(id) },
+                    select: { img_public_id: true }
+                });
+
+                if (existingUser && existingUser.img_public_id) {
+                    await cloudinary.uploader.destroy(existingUser.img_public_id);
+                }
+
+                const uploadResponse = await new Promise((resolve, reject) => {
+                    cloudinary.uploader.upload_stream({ folder: 'veterinarias' }, (error, result) => {
+                        if (error) {
+                            console.error('Error al subir imagen a Cloudinary:', error);
+                            reject(error);
+                        } else {
+                            resolve(result);
+                        }
+                    }).end(req.file.buffer);
+                });
+
+                updateData.img = uploadResponse.secure_url;
+                updateData.img_public_id = uploadResponse.public_id;
+            }
+
+            // Manejo de categorías (agregar o eliminar)
+            if (newCategories || removeCategories) {
+                let categoriesToRemove = [];
+                let categoriesToAdd = [];
+                const validCategories = ["NUTRITION", "RECREATION", "CARE"];
+
+                if (removeCategories) {
+                    categoriesToRemove = typeof removeCategories === 'string' ? [removeCategories] : removeCategories;
+                    categoriesToRemove = categoriesToRemove.filter(cat => validCategories.includes(cat));
+                }
+
+                if (newCategories) {
+                    categoriesToAdd = typeof newCategories === 'string' ? [newCategories] : newCategories;
+                    categoriesToAdd = categoriesToAdd.filter(cat => validCategories.includes(cat));
+                }
+
+                const existingData = await prisma.veterinary.findUnique({
+                    where: { id: parseInt(id) },
+                    select: { category: true }
+                });
+
+                if (existingData) {
+                    const updatedCategories = [
+                        ...existingData.category.filter(cat => !categoriesToRemove.includes(cat)),
+                        ...categoriesToAdd.filter(cat => !existingData.category.includes(cat))
+                    ];
+                    updateData.category = updatedCategories;
+                }
+            }
+
+            // Validación y actualización de horarios
+            if (horaInicio || horaFin || diasSemana) {
+                // Verificar si existen citas pendientes
+                const pendingAppointments = await prisma.appointment.findMany({
+                    where: {
+                        veterinaryId: parseInt(id),
+                        done: false
+                    }
+                });
+
+                if (pendingAppointments.length > 0) {
+                    return res.status(400).json({
+                        error: 'No se pueden modificar los horarios porque hay citas pendientes.'
+                    });
+                }
+
+                // Eliminar horarios antiguos
+                await prisma.availableHour.deleteMany({
+                    where: { veterinaryId: parseInt(id) }
+                });
+
+                // Crear nuevos horarios si se especifican `horaInicio`, `horaFin`, y `diasSemana`
+                if (horaInicio && horaFin && diasSemana) {
+                    const horaInicioNum = parseInt(horaInicio, 10);
+                    const horaFinNum = parseInt(horaFin, 10);
+                    const diasArray = Array.isArray(diasSemana) ? diasSemana : [diasSemana];
+
+                    const horarios = [];
+
+                    for (const dia of diasArray) {
+                        for (let hora = horaInicioNum; hora < horaFinNum; hora++) {
+                            const horaFormato = `${hora.toString().padStart(2, '0')}:00`;
+                            horarios.push({
+                                hour: horaFormato,
+                                day: dia,
+                                veterinaryId: parseInt(id)
+                            });
+                        }
+                    }
+
+                    await prisma.availableHour.createMany({
+                        data: horarios
+                    });
+                }
+            }
+
+            // Actualizar otros datos de la veterinaria
+            await prisma.veterinary.update({
+                where: { id: parseInt(id) },
+                data: updateData
+            });
+
+            res.status(200).json({ message: "Veterinaria actualizada correctamente" });
+        } catch (e) {
+            console.error(e);
+            res.status(500).json({ error: 'Error al actualizar la veterinaria' });
+        }
+    });
+};
 
 const listUsers = async (req, res) => {
     try {
@@ -440,4 +608,44 @@ const listVeterinaries = async (req, res) => {
     }
 };
 
-module.exports = { updateUser, createUser, listUsers, deleteUser, createVeterinary, listVeterinaries };
+const getVeterinary = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        console.log(id)
+
+        const veterinary = await prisma.veterinary.findUnique({
+            where: { id: parseInt(id, 10) },
+            include: {
+                availableHours: true,  
+                appointments: true     
+            }
+        });
+
+        if (!veterinary) {
+            return res.status(404).json({ message: 'Veterinaria no encontrada' });
+        }
+
+        const hours = veterinary.availableHours.map(entry => entry.hour).sort();
+        const days = [...new Set(veterinary.availableHours.map(entry => entry.day))];
+
+        const hora_ini = hours[0];          
+        const hora_fin = hours[hours.length - 1]; 
+
+        const response = {
+            ...veterinary,
+            hora_ini,
+            hora_fin,
+            dias: days
+        };
+        delete response.availableHours;
+
+        res.status(200).json({ veterinary: response });
+
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ message: 'Error en el servidor' });
+    }
+};
+
+module.exports = { getVeterinary,updateUser, createUser, listUsers, deleteUser, createVeterinary, listVeterinaries,updateVeterinary };
