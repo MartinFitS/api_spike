@@ -1,3 +1,5 @@
+// src/controllers/user.controller.js
+
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const bcrypt = require('bcrypt');
@@ -116,6 +118,7 @@ const createUser = async (req, res) => {
         }
     });
 };
+
 // Función para generar el inicio del RFC basado en el nombre de la empresa según las reglas
 function generateRFCStart(name) {
     const words = name.trim().split(' ').filter(word => !["de", "y", "la"].includes(word.toLowerCase()));
@@ -314,6 +317,76 @@ const createVeterinary = async (req, res) => {
     });
 };
 
+
+const updateUserPO = async (req, res) => {
+    const userId = req.params.id;
+    const { ownerName, email, phone, address, city, locality, postalCode, img } = req.body;
+
+    try {
+        // Verificar si el usuario existe
+        const user = await prisma.user.findUnique({
+            where: { id: parseInt(userId) },
+        });
+
+        if (!user) {
+            return res.status(404).send('Usuario no encontrado');
+        }
+
+        // Inicializar imgUrl con la imagen actual del usuario
+        let imgUrl = user.img;
+        let imgPublicId = user.img_public_id;
+
+        // Si se pasa una nueva imagen por URL (como string), subirla a Cloudinary
+        if (img && typeof img === 'string') {
+            const uploadedImg = await cloudinary.uploader.upload(img, { folder: 'petowner_images' });
+            imgUrl = uploadedImg.secure_url;
+            imgPublicId = uploadedImg.public_id; // Guardar el public_id de la nueva imagen
+        }
+
+        // Si hay un archivo para subir (req.file), subirlo a Cloudinary
+        if (req.file) {
+            // Eliminar la imagen antigua de Cloudinary si existe
+            if (imgPublicId) {
+                await cloudinary.uploader.destroy(imgPublicId);
+            }
+
+            const uploadResponse = await new Promise((resolve, reject) => {
+                cloudinary.uploader.upload_stream({ folder: 'petowner_images' }, (error, result) => {
+                    if (error) {
+                        console.error('Error uploading image to Cloudinary:', error);
+                        reject(error);
+                    } else {
+                        resolve(result);
+                    }
+                }).end(req.file.buffer);
+            });
+
+            imgUrl = uploadResponse.secure_url;
+            imgPublicId = uploadResponse.public_id; // Guardar el nuevo public_id
+        }
+
+        // Actualizar el usuario en la base de datos
+        const updatedUser = await prisma.user.update({
+            where: { id: parseInt(userId) },
+            data: {
+                ownerName,
+                email,
+                phone,
+                address,
+                city,
+                locality,
+                postalCode,
+                img: imgUrl, // Usar la nueva imagen
+                img_public_id: imgPublicId, // Guardar el public_id para eliminar la imagen si se actualiza
+            },
+        });
+
+        res.json(updatedUser);
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Error al actualizar los datos del usuario');
+    }
+};
 
 const updateUser = async (req, res) => {
     upload(req, res, async function (err) {
@@ -562,6 +635,29 @@ const updateVeterinary = async (req, res) => {
     });
 };
 
+const getUser = async (req, res) => {
+    const userId = req.params.id;
+
+    // Lógica para recuperar el usuario por ID usando Prisma
+    try {
+        const user = await prisma.user.findUnique({
+            where: {
+                id: parseInt(userId), // Asegúrate de que el ID esté en el formato adecuado
+            },
+        });
+
+        if (!user) {
+            return res.status(404).send('Usuario no encontrado');
+        }
+
+        res.json(user);
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Error al obtener los datos del usuario');
+    }
+};
+
+
 const listUsers = async (req, res) => {
     try {
         const users = await prisma.user.findMany();
@@ -648,4 +744,4 @@ const getVeterinary = async (req, res) => {
     }
 };
 
-module.exports = { getVeterinary,updateUser, createUser, listUsers, deleteUser, createVeterinary, listVeterinaries,updateVeterinary };
+module.exports = { getUser,updateUserPO, getVeterinary,updateUser, createUser, listUsers, deleteUser, createVeterinary, listVeterinaries,updateVeterinary };
