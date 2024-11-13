@@ -20,46 +20,109 @@ model holamundo {
 }
 
 model User {
-  id         Int       @id @default(autoincrement())
-  firstName  String
-  lastName   String
-  email      String    @unique
-  phone      String
-  password   String
-  role       Role
-  city       String    
-  number_int Int
-  cp         Int
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
+  id            Int       @id @default(autoincrement())
+  firstName     String
+  lastName      String
+  email         String    @unique
+  phone         String
+  password      String
+  role          Role
+  city          String    
+  number_int    String
+  cp            String
+  img           String?
+  img_public_id String?
+  pets          Pet[]             // Relación con mascotas
+  appointments  Appointment[]     // Relación con citas
+  isActive   Boolean   @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   @@map("users")
   @@index([firstName, lastName])
 }
 
 model Veterinary {
-  id         Int       @id @default(autoincrement())
-  veterinarieName  String
-  street   String
-  email      String    @unique
-  phone      String
-  password   String
-  role       Role
-  city       String  
-  locality   String  
-  cologne    String
-  number_int Int
-  cp         Int
-  rfc        String
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
+  id              Int              @id @default(autoincrement())
+  veterinarieName String
+  street          String
+  email           String           @unique
+  phone           String
+  password        String
+  role            Role
+  city            String  
+  locality        String  
+  cologne         String
+  number_int      String
+  cp              String
+  rfc             String
+  category        Categories[] 
+  img             String?
+  img_public_id   String?
+  availableHours  AvailableHour[]  // Relación con horarios disponibles
+  appointments    Appointment[]    // Relación con citas
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   @@map("veterinarys")
   @@index([veterinarieName])
+}
+
+model Pet {
+  id            Int       @id @default(autoincrement())
+  owner         User      @relation(fields: [ownerId], references: [id])
+  ownerId       Int
+  name          String
+  gender        String
+  weight        Float
+  height        String
+  animal        String
+  age           Int
+  img           String?
+  img_public_id String?
+  appointments  Appointment[]      // Relación con citas
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("pets")
+  @@index([name])
+}
+
+model Appointment {
+  id            Int        @id @default(autoincrement())
+  veterinary    Veterinary @relation(fields: [veterinaryId], references: [id])
+  veterinaryId  Int
+  pet           Pet        @relation(fields: [petId], references: [id])
+  petId         Int
+  user          User       @relation(fields: [userId], references: [id])
+  userId        Int
+  date          DateTime
+  hour          AvailableHour @relation(fields: [hourId], references: [id])
+  hourId        Int
+  done          Boolean    @default(false)
+  createdAt     DateTime   @default(now())
+
+  // Restricción única para evitar citas duplicadas el mismo día y hora en una veterinaria específica
+  @@unique([veterinaryId, date, hourId])
+}
+
+model AvailableHour {
+  id           Int        @id @default(autoincrement())
+  veterinary   Veterinary @relation(fields: [veterinaryId], references: [id])
+  veterinaryId Int
+  hour         String     // Formato de hora, por ejemplo: "10:00 AM", "02:30 PM"
+  day          String     // Día de la semana en el que está disponible
+  appointments Appointment[] 
 }
 
 enum Role {
   ADMIN
   VETERINARY_OWNER
   PET_OWNER
+}
+
+enum Categories {
+  NUTRITION
+  RECREATION
+  CARE
 }

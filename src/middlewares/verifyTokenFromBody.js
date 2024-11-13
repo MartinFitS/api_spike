@@ -1,24 +1,35 @@
-const jwt = require('jsonwebtoken');
+     // src/middlewares/verifyTokenFromBody.js
 
-require('dotenv').config();
+    const jwt = require('jsonwebtoken');
 
-const verifyTokenFromBody = (req, res, next) => {
-    const { token } = req.body;
+    require('dotenv').config();
 
-    if (!token) {
-        return res.status(403).json({ message: 'Token requerido' });
-    }
+    const verifyTokenFromBody = (req, res, next) => {
+        const token = 
+            req.body.token || 
+            req.query.token || 
+            req.headers['x-access-token'] ||
+            req.headers['authorization']?.split(' ')[1];
 
-    try {
+        if (!token) {
+            return res.status(403).json({ message: 'Token requerido' });
+        }
 
-        const decoded = jwt.verify(token, process.env.SECRET);
+        if (!process.env.SECRET) {
+            return res.status(500).json({ message: 'Secreto no configurado' });
+        }
         
-        req.user = decoded;
-        
-        next();
-    } catch (e) {
-        return res.status(401).json({ message: 'Token inválido o expirado' });
-    }
-};
 
-module.exports = verifyTokenFromBody;
+        try {
+
+            const decoded = jwt.verify(token, process.env.SECRET);
+            
+            req.user = decoded;
+            
+            next();
+        } catch (e) {
+            return res.status(401).json({ message: 'Token inválido o expirado' });
+        }
+    };
+
+    module.exports = verifyTokenFromBody;

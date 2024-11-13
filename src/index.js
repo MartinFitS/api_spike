@@ -1,7 +1,11 @@
+// src/index.js
+
 require('dotenv').config();
 const app = require("./app");
 
-app.listen(process.env.PORT || 3000, () => {
-    console.log(`Servidor corriendo en el puerto ${process.env.PORT}`);
-});
+// Usar el puerto proporcionado por Vercel
+const port = process.env.PORT || 3000;
 
+app.listen(port, () => {
+    console.log(`Servidor corriendo en el puerto ${port}`);
+});
