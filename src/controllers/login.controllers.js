@@ -44,8 +44,7 @@ const login = async (req, res) => {
         // Generar el token JWT
         const token = jwt.sign(
             { id: user.id, email: user.email }, 
-            process.env.SECRET, 
-            { expiresIn: '1h' } 
+            process.env.SECRET
         );
 
         // Procesar `availableHours` para obtener `hora_ini`, `hora_fin` y `dias`
