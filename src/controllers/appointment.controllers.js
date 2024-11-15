@@ -138,8 +138,64 @@ const completadaCita = async(req,res) => {
     }
 }
 
+const citasUsuario = async (req, res) => {
+    try {
+        const ownerId = req.body.ownerId;
+
+        const citas = await prisma.appointment.findMany({
+            where: { userId: ownerId },
+            include: {
+                pet: true, 
+                hour: true,
+                user: true 
+            }
+        });
+
+        const citasCompletadas = citas.filter(cita => cita.done === true);
+        const citasPendientes = citas.filter(cita => cita.done === false);
+
+        res.json({
+            completadas: citasCompletadas,
+            pendientes: citasPendientes
+        });
+
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: 'Ocurrió un error al obtener las citas del usuario.' });
+    }
+};
+
+const citasVet = async (req, res) => {
+    try {
+        const vetId = req.body.vetId;
+
+        const citas = await prisma.appointment.findMany({
+            where: { veterinaryId: vetId },
+            include: {
+                pet: true, 
+                hour: true,
+                user: true 
+            }
+        });
+
+        const citasCompletadas = citas.filter(cita => cita.done === true);
+        const citasPendientes = citas.filter(cita => cita.done === false);
+
+        res.json({
+            completadas: citasCompletadas,
+            pendientes: citasPendientes
+        });
+
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: 'Ocurrió un error al obtener las citas del usuario.' });
+    }
+};
+
 module.exports = {
     crearCita,
     cancelarCita,
-    completadaCita
+    completadaCita,
+    citasUsuario,
+    citasVet
 };

@@ -15,7 +15,11 @@ const login = async (req, res) => {
         });
 
         const userFromVeterinary = await prisma.veterinary.findUnique({
-            where: { email }
+            where: { email },
+            include: {
+                availableHours: true,  // Incluir horarios disponibles
+                appointments: true     // Incluir citas
+            }
         });
 
         const user = userFromUsers || userFromVeterinary;
@@ -44,6 +48,19 @@ const login = async (req, res) => {
             { expiresIn: '1h' } 
         );
 
+        // Procesar `availableHours` para obtener `hora_ini`, `hora_fin` y `dias`
+        if (userFromVeterinary) {
+            const hours = user.availableHours.map(entry => entry.hour).sort();
+            const days = [...new Set(user.availableHours.map(entry => entry.day))];
+
+            user.hora_ini = hours[0];           // Hora más temprana
+            user.hora_fin = hours[hours.length - 1]; // Hora más tardía
+            user.dias = days;
+
+            // Eliminar el array `availableHours` del usuario
+            delete user.availableHours;
+        }
+
         res.status(200).json({ user, token });
 
     } catch (e) {
@@ -51,6 +68,9 @@ const login = async (req, res) => {
         res.status(500).json({ message: 'Error en el servidor' });
     }
 };
+
+
+
 
 
 module.exports = {login}

@@ -217,4 +217,74 @@ https://api-spikeapp.vercel.app/
 ```
 
 
+### 8. Citas usuario
+
+- **Endpoint:** `POST /citasUsuario`
+- **Descripción:** tare citas hechas y pendientes.
+- **Parámetros del cuerpo de la solicitud:**
+
+```json
+
+    {
+        "ownerId": 1
+    }
+
+```
+
+### 9. Citas veterianaria
+
+- **Endpoint:** `POST /citasVet`
+- **Descripción:** tare citas hechas y pendientes.
+- **Parámetros del cuerpo de la solicitud:**
+
+```json
+
+    {
+        "vetId": 1
+    }
+
+    respuesta
+
+    {
+        {
+    "completadas": [],
+    "pendientes": [
+        {
+            "id": 4,
+            "veterinaryId": 1,
+            "petId": 11,
+            "userId": 2,
+            "date": "2024-11-26T00:00:00.000Z",
+            "hourId": 1,
+            "done": false,
+            "createdAt": "2024-11-09T02:45:55.836Z",
+            "pet": {
+                "id": 11,
+                "ownerId": 2,
+                "name": "Djej",
+                "gender": "0",
+                "weight": 2,
+                "height": "4",
+                "animal": "1",
+                "age": 25,
+                "img": "https://res.cloudinary.com/dkwulpnkt/image/upload/v1731000992/mascotas/fd2jbpghukd446eovil2.png",
+                "img_public_id": "mascotas/fd2jbpghukd446eovil2",
+                "createdAt": "2024-11-07T17:36:33.132Z",
+                "updatedAt": "2024-11-07T17:36:33.132Z"
+            },
+            "hour": {
+                "id": 1,
+                "veterinaryId": 1,
+                "hour": "02:00",
+                "day": "Tuesday"
+            }
+        }
+    ]
+}
+    }
+
+```
+
+
+
 
