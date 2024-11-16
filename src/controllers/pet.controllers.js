@@ -187,5 +187,47 @@ const updatePet = async (req, res) => {
 };
 
 
+const deathPet = async(req,res) => {
+    try{
+        const { petId, dateOfDeath } = req.body;
 
-module.exports = {createPet,getPets,getPet,updatePet}
+        const pet = await prisma.pet.findUnique({
+            where: { id: petId },
+        });
+
+        if (!pet) {
+            return res.status(404).json({ error: "La mascota no existe" });
+        }
+
+        await prisma.appointment.deleteMany({
+            where: { petId },
+        });
+
+        await prisma.deceasedPet.create({
+            data: {
+                originalId: pet.id,
+                ownerId: pet.ownerId,
+                name: pet.name,
+                gender: pet.gender,
+                weight: pet.weight,
+                height: pet.height,
+                animal: pet.animal,
+                age: pet.age,
+                img: pet.img,
+                img_public_id: pet.img_public_id,
+                dateOfDeath, 
+            },
+        });
+
+        await prisma.pet.delete({
+            where: { id: petId },
+        });
+
+        res.status(200).json({ message: "Mascota movida a la tabla de fallecidas" });
+    }catch(e){
+        console.error(e)
+    }
+}
+
+
+module.exports = {createPet,getPets,getPet,updatePet,deathPet}

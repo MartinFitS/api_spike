@@ -127,7 +127,7 @@ model DeceasedPet {
   age           Int
   img           String?
   img_public_id String?
-  dateOfDeath   DateTime // Fecha en que falleció
+  dateOfDeath   String // Fecha en que falleció
   createdAt     DateTime @default(now())
 
   @@index([name])
