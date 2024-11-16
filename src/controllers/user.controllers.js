@@ -116,7 +116,7 @@ const createUser = async (req, res) => {
         }
     });
 };
-// Función para generar el inicio del RFC basado en el nombre de la empresa según las reglas
+
 function generateRFCStart(name) {
     const words = name.trim().split(' ').filter(word => !["de", "y", "la"].includes(word.toLowerCase()));
     let initials = "";
@@ -314,7 +314,6 @@ const createVeterinary = async (req, res) => {
     });
 };
 
-
 const updateUser = async (req, res) => {
     upload(req, res, async function (err) {
         if (err) {
@@ -434,7 +433,6 @@ const updateVeterinary = async (req, res) => {
         const updateData = { ...rest };
 
         try {
-            // Validación de contraseña
             if (password) {
                 const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[-_!¡?¿:@$!%*?&])[A-Za-z\d-_!¡?¿:@$!%*?&]{8,}$/;
                 if (!passwordRegex.test(password)) {
@@ -446,7 +444,6 @@ const updateVeterinary = async (req, res) => {
                 updateData.password = hashedPassword;
             }
 
-            // Manejo de imagen
             if (req.file) {
                 const existingUser = await prisma.veterinary.findUnique({
                     where: { id: parseInt(id) },
@@ -472,7 +469,6 @@ const updateVeterinary = async (req, res) => {
                 updateData.img_public_id = uploadResponse.public_id;
             }
 
-            // Manejo de categorías (agregar o eliminar)
             if (newCategories || removeCategories) {
                 let categoriesToRemove = [];
                 let categoriesToAdd = [];
@@ -502,9 +498,7 @@ const updateVeterinary = async (req, res) => {
                 }
             }
 
-            // Validación y actualización de horarios
             if (horaInicio || horaFin || diasSemana) {
-                // Verificar si existen citas pendientes
                 const pendingAppointments = await prisma.appointment.findMany({
                     where: {
                         veterinaryId: parseInt(id),
@@ -518,12 +512,10 @@ const updateVeterinary = async (req, res) => {
                     });
                 }
 
-                // Eliminar horarios antiguos
                 await prisma.availableHour.deleteMany({
                     where: { veterinaryId: parseInt(id) }
                 });
 
-                // Crear nuevos horarios si se especifican `horaInicio`, `horaFin`, y `diasSemana`
                 if (horaInicio && horaFin && diasSemana) {
                     const horaInicioNum = parseInt(horaInicio, 10);
                     const horaFinNum = parseInt(horaFin, 10);
@@ -548,7 +540,6 @@ const updateVeterinary = async (req, res) => {
                 }
             }
 
-            // Actualizar otros datos de la veterinaria
             await prisma.veterinary.update({
                 where: { id: parseInt(id) },
                 data: updateData

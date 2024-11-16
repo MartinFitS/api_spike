@@ -1,84 +1,114 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
+const nodemailer = require("nodemailer");
+
 const crearCita = async (req, res) => {
     try {
         const { veterinaryId, petId, userId, date, hour } = req.body;
 
-        // Validar datos de entrada
         if (!veterinaryId || !petId || !userId || !date || !hour) {
-            return res.status(400).json({ error: 'Todos los campos son requeridos' });
+            return res.status(400).json({ error: "Todos los campos son requeridos" });
         }
 
-        // Verificar que el usuario exista
-        const usuario = await prisma.user.findUnique({
-            where: { id: userId }
-        });
+        const usuario = await prisma.user.findUnique({ where: { id: userId } });
         if (!usuario) {
-            return res.status(404).json({ error: 'El usuario no existe' });
+            return res.status(404).json({ error: "El usuario no existe" });
         }
 
-        // Verificar que la mascota exista
-        const mascota = await prisma.pet.findUnique({
-            where: { id: petId }
-        });
+        const mascota = await prisma.pet.findUnique({ where: { id: petId } });
         if (!mascota) {
-            return res.status(404).json({ error: 'La mascota no existe' });
+            return res.status(404).json({ error: "La mascota no existe" });
         }
 
-        // Verificar que la mascota pertenece al usuario
         if (mascota.ownerId !== userId) {
-            return res.status(403).json({ error: 'La mascota no pertenece al usuario' });
+            return res.status(403).json({ error: "La mascota no pertenece al usuario" });
         }
 
-        // Convertir la fecha a la zona horaria local y obtener el día de la semana
         const appointmentDate = new Date(date);
         const localAppointmentDate = new Date(appointmentDate.getTime() + appointmentDate.getTimezoneOffset() * 60000);
-        const dayOfWeek = localAppointmentDate.toLocaleDateString('en-US', { weekday: 'long' });
+        const dayOfWeek = localAppointmentDate.toLocaleDateString("en-US", { weekday: "long" });
 
-        console.log(`Veterinary ID: ${veterinaryId}, Day: ${dayOfWeek}, Hour: ${hour}`);
-
-        // Verificar que el horario esté disponible en `AvailableHour`
         const horarioDisponible = await prisma.availableHour.findFirst({
-            where: {
-                veterinaryId: veterinaryId,
-                day: dayOfWeek,
-                hour: hour
-            }
+            where: { veterinaryId: veterinaryId, day: dayOfWeek, hour: hour },
         });
 
         if (!horarioDisponible) {
-            return res.status(400).json({ error: 'El horario seleccionado no está disponible' });
+            return res.status(400).json({ error: "El horario seleccionado no está disponible" });
         }
 
-        // Verificar que no exista una cita para la misma veterinaria, día y hora
         const citaExistente = await prisma.appointment.findFirst({
-            where: {
-                veterinaryId: veterinaryId,
-                date: appointmentDate,
-                hourId: horarioDisponible.id
-            }
+            where: { veterinaryId: veterinaryId, date: appointmentDate, hourId: horarioDisponible.id },
         });
 
         if (citaExistente) {
-            return res.status(400).json({ error: 'Ya existe una cita para esta fecha y hora' });
+            return res.status(400).json({ error: "Ya existe una cita para esta fecha y hora" });
         }
 
-        // Crear la nueva cita en `Appointment`
         const nuevaCita = await prisma.appointment.create({
             data: {
                 veterinaryId: veterinaryId,
                 petId: petId,
                 userId: userId,
                 date: appointmentDate,
-                hourId: horarioDisponible.id
+                hourId: horarioDisponible.id,
+            },
+            include: {
+                veterinary: true, // Incluimos la información de la veterinaria
             }
         });
 
-        res.status(201).json({ message: 'Cita creada exitosamente', nuevaCita });
+        const transporter = nodemailer.createTransport({
+            service: "gmail",
+            auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
+        });
+
+        const mailOptions = {
+            from: process.env.EMAIL_USER,
+            to: usuario.email,
+            subject: "Confirmación de Cita para tu Mascota 🐾",
+            html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #ddd; border-radius: 8px; overflow: hidden;">
+                    <div style="background-color: #4CAF50; color: white; padding: 20px; text-align: center;">
+                        <h1 style="margin: 0;">Confirmación de Cita</h1>
+                        <p style="margin: 0;">¡Tu cita está confirmada!</p>
+                    </div>
+                    <div style="padding: 20px;">
+                        <p>Hola <strong>${usuario.firstName} ${usuario.lastName}</strong>,</p>
+                        <p>
+                            Nos complace informarte que tu cita para tu mascota <strong>${mascota.name}</strong> 
+                            ha sido confirmada con éxito.
+                        </p>
+                        <p><strong>Detalles de la Cita:</strong></p>
+                        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                            <tr>
+                                <td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">Veterinaria:</td>
+                                <td style="padding: 8px; border: 1px solid #ddd;">${nuevaCita.veterinary.veterinarieName}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">Fecha:</td>
+                                <td style="padding: 8px; border: 1px solid #ddd;">${localAppointmentDate.toDateString()}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">Hora:</td>
+                                <td style="padding: 8px; border: 1px solid #ddd;">${hour}</td>
+                            </tr>
+                        </table>
+                        <p style="margin-bottom: 0;">¡Gracias por confiar en nosotros! 🐾</p>
+                    </div>
+                    <div style="background-color: #f4f4f4; padding: 10px; text-align: center;">
+                        <p style="margin: 0; font-size: 12px; color: #555;">Si tienes alguna pregunta, no dudes en contactarnos.</p>
+                    </div>
+                </div>
+            `,
+        };
+
+        await transporter.sendMail(mailOptions);
+
+        res.status(201).json({ message: "Cita creada exitosamente y correo enviado", nuevaCita });
     } catch (e) {
         console.error(e);
-        res.status(500).json({ error: 'Error al crear la cita' });
+        res.status(500).json({ error: "Error al crear la cita" });
     }
 };
 
