@@ -8,12 +8,15 @@ const routerLogin = require("./routes/login.routes");
 const routerPet = require("./routes/pet.routes");
 const routerAppointment = require("./routes/appoinments.routes");
 const routerVerification = require("./routes/verification.routes");
+const swaggerSpec = require("./utils/swagger.config");
+const swaggerUi = require("swagger-ui-express");
 
 const app = express();
 
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
+app.use("/api", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use(express.static(path.join(__dirname, 'public')));
 
 
