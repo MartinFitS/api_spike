@@ -16,6 +16,10 @@ const app = express();
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
+app.use(
+  "/swagger-ui",
+  express.static(path.join(__dirname, "node_modules/swagger-ui-dist"))
+);
 app.use("/api", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use(express.static(path.join(__dirname, 'public')));
 
