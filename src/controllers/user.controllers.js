@@ -590,27 +590,7 @@ const getUser = async (req, res) => {
 };
 
 
-const getUser = async (req, res) => {
-    const userId = req.params.id;
 
-    // Lógica para recuperar el usuario por ID usando Prisma
-    try {
-        const user = await prisma.user.findUnique({
-            where: {
-                id: parseInt(userId), // Asegúrate de que el ID esté en el formato adecuado
-            },
-        });
-
-        if (!user) {
-            return res.status(404).send('Usuario no encontrado');
-        }
-
-        res.json(user);
-    } catch (error) {
-        console.error(error);
-        res.status(500).send('Error al obtener los datos del usuario');
-    }
-};
 
 
 const listUsers = async (req, res) => {
@@ -725,4 +705,4 @@ const getUserPets = async (req, res) => {
     }
   };
 
-module.exports = { getUserPets, getUser,updateUserPO, getVeterinary,updateUser, createUser, listUsers, deleteUser, createVeterinary, listVeterinaries,updateVeterinary };
+module.exports = { getUserPets, getUser, getVeterinary,updateUser, createUser, listUsers, deleteUser, createVeterinary, listVeterinaries,updateVeterinary };
