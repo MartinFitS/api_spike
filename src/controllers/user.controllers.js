@@ -1,3 +1,7 @@
+// src/controllers/user.controller.js
+
+// src/controllers/user.controller.js
+
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const bcrypt = require('bcrypt');
@@ -117,6 +121,8 @@ const createUser = async (req, res) => {
     });
 };
 
+
+// Función para generar el inicio del RFC basado en el nombre de la empresa según las reglas
 function generateRFCStart(name) {
     const words = name.trim().split(' ').filter(word => !["de", "y", "la"].includes(word.toLowerCase()));
     let initials = "";
@@ -433,6 +439,7 @@ const updateVeterinary = async (req, res) => {
         const updateData = { ...rest };
 
         try {
+            // Validación de contraseña
             if (password) {
                 const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[-_!¡?¿:@$!%*?&])[A-Za-z\d-_!¡?¿:@$!%*?&]{8,}$/;
                 if (!passwordRegex.test(password)) {
@@ -444,6 +451,7 @@ const updateVeterinary = async (req, res) => {
                 updateData.password = hashedPassword;
             }
 
+            // Manejo de imagen
             if (req.file) {
                 const existingUser = await prisma.veterinary.findUnique({
                     where: { id: parseInt(id) },
@@ -469,6 +477,7 @@ const updateVeterinary = async (req, res) => {
                 updateData.img_public_id = uploadResponse.public_id;
             }
 
+            // Manejo de categorías (agregar o eliminar)
             if (newCategories || removeCategories) {
                 let categoriesToRemove = [];
                 let categoriesToAdd = [];
@@ -498,7 +507,9 @@ const updateVeterinary = async (req, res) => {
                 }
             }
 
+            // Validación y actualización de horarios
             if (horaInicio || horaFin || diasSemana) {
+                // Verificar si existen citas pendientes
                 const pendingAppointments = await prisma.appointment.findMany({
                     where: {
                         veterinaryId: parseInt(id),
@@ -512,10 +523,12 @@ const updateVeterinary = async (req, res) => {
                     });
                 }
 
+                // Eliminar horarios antiguos
                 await prisma.availableHour.deleteMany({
                     where: { veterinaryId: parseInt(id) }
                 });
 
+                // Crear nuevos horarios si se especifican `horaInicio`, `horaFin`, y `diasSemana`
                 if (horaInicio && horaFin && diasSemana) {
                     const horaInicioNum = parseInt(horaInicio, 10);
                     const horaFinNum = parseInt(horaFin, 10);
@@ -540,6 +553,7 @@ const updateVeterinary = async (req, res) => {
                 }
             }
 
+            // Actualizar otros datos de la veterinaria
             await prisma.veterinary.update({
                 where: { id: parseInt(id) },
                 data: updateData
@@ -552,6 +566,32 @@ const updateVeterinary = async (req, res) => {
         }
     });
 };
+
+const getUser = async (req, res) => {
+    const userId = req.params.id;
+
+    // Lógica para recuperar el usuario por ID usando Prisma
+    try {
+        const user = await prisma.user.findUnique({
+            where: {
+                id: parseInt(userId), // Asegúrate de que el ID esté en el formato adecuado
+            },
+        });
+
+        if (!user) {
+            return res.status(404).send('Usuario no encontrado');
+        }
+
+        res.json(user);
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Error al obtener los datos del usuario');
+    }
+};
+
+
+
+
 
 const listUsers = async (req, res) => {
     try {
@@ -639,4 +679,30 @@ const getVeterinary = async (req, res) => {
     }
 };
 
-module.exports = { getVeterinary,updateUser, createUser, listUsers, deleteUser, createVeterinary, listVeterinaries,updateVeterinary };
+const getUserPets = async (req, res) => {
+    const userId = parseInt(req.params.userId); // Obtiene el userId de los parámetros de la URL
+  
+    try {
+      // Busca las mascotas que pertenezcan al usuario con el userId especificado
+      const pets = await prisma.pet.findMany({
+        where: { ownerId: userId },
+        select: {
+          id: true,
+          name: true,
+          gender: true,
+          weight: true,
+          height: true,
+          animal: true,
+          age: true,
+          img: true,
+        },
+      });
+  
+      res.status(200).json(pets);
+    } catch (error) {
+      console.error("Error al obtener la lista de mascotas:", error);
+      res.status(500).json({ error: "No se pudo obtener la lista de mascotas." });
+    }
+  };
+
+module.exports = { getUserPets, getUser, getVeterinary,updateUser, createUser, listUsers, deleteUser, createVeterinary, listVeterinaries,updateVeterinary };
