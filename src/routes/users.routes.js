@@ -706,5 +706,7 @@ router.post("/getVeterinaries", verifyTokenFromBody, listVeterinaries);
  */
 
 router.get("/getveterinary/:id", getVeterinary)
+router.get("/user/pets/:userId", verifyTokenFromBody, getUserPets);
+router.get("/getUsers/:id", verifyTokenFromBody, getUser);
 
 module.exports = router;
