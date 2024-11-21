@@ -14,7 +14,7 @@ npx prisma migrate dev --name init
 ```
 # API de Gestión de Veterinarias
 
-API Spike para la gestión de veterinarias, que permite crear y administrar datos relacionados con clínicas veterinarias.
+API Spike para la gestión de veterinarias, que permite crear y administrar datos relacionados con clínicas veterinarias. Perteneciente a  [Spike App](https://github.com/Paco-Taco/SpikeNative)
 
 # URL api
 
