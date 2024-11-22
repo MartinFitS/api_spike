@@ -214,29 +214,93 @@ const cancelarCita = async (req, res) => {
 };
 
 
-const completadaCita = async(req,res) => {
+const completadaCita = async (req, res) => {
     try {
         const { appointmentId } = req.body;
 
         const cita = await prisma.appointment.findUnique({
-            where: { id: appointmentId }
+            where: { id: appointmentId },
+            include: {
+                hour: true,
+                veterinary: true,
+                user: {
+                    select: {
+                        email: true,
+                        firstName: true,
+                        lastName: true
+                    }
+                }
+            }
         });
 
         if (!cita) {
             return res.status(404).json({ message: 'Cita no encontrada' });
         }
 
-        const citaActualizada = await prisma.appointment.update({
-            where: { id: appointmentId },
-            data: { done: true }
+        const userName = `${cita.user.firstName} ${cita.user.lastName}`;
+        const fechaCita = new Date(cita.date);
+
+        // Configurar transporte de correo
+        const transporter = nodemailer.createTransport({
+            service: 'Gmail',
+            auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS }
         });
 
-        res.status(200).json({ message: 'Cita marcada como realizada', cita: citaActualizada });
+        // Configurar el mensaje de correo
+        const mailOptions = {
+            from: process.env.EMAIL_USER,
+            to: cita.user.email,
+            subject: '¡Gracias por asistir a tu cita en Spike!',
+            html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background-color: #f9f9f9;">
+                  <!-- Cabecera con el logo -->
+                  <header style="text-align: center; margin-bottom: 20px;">
+                    <img src="https://res.cloudinary.com/dkwulpnkt/image/upload/v1730681515/logo_u7zvk1.png" alt="Spike Logo" style="max-width: 100px; margin-bottom: 10px;">
+                    <h1 style="color: #4CAF50; font-size: 24px; margin: 0;">¡Gracias por tu visita!</h1>
+                  </header>
+                  <!-- Contenido principal -->
+                  <main>
+                    <p style="color: #333; font-size: 16px; line-height: 1.5;">
+                      Hola <strong>${userName || 'Usuario'}</strong>,
+                    </p>
+                    <p style="color: #333; font-size: 16px; line-height: 1.5;">
+                      Queremos agradecerte por asistir a tu cita el día 
+                      <strong>${fechaCita.toLocaleDateString()}</strong> a las 
+                      <strong>${cita.hour.hour}</strong> en
+                      <strong>${cita.veterinary.veterinarieName}</strong>.
+                    </p>
+                    <p style="color: #333; font-size: 16px; line-height: 1.5;">
+                      Esperamos que tú y tu mascota hayan recibido la mejor atención. Si tienes algún comentario o necesitas programar otra cita, no dudes en contactarnos.
+                    </p>
+                    <p style="color: #555; font-size: 14px; line-height: 1.5;">
+                      ¡Gracias por confiar en Spike para el cuidado de tus mascotas!
+                    </p>
+                  </main>
+                  <!-- Pie de página -->
+                  <footer style="margin-top: 20px; text-align: center; padding: 10px; border-top: 1px solid #ddd;">
+                    <p style="color: #999; font-size: 12px; margin: 0;">
+                      Atentamente,<br><strong>Equipo Spike</strong>
+                    </p>
+                    <p style="color: #999; font-size: 12px; margin: 5px 0;">
+                      <em>Tu aliado en el cuidado de tus mascotas</em>
+                    </p>
+                  </footer>
+                </div>
+            `
+        };
+
+        await transporter.sendMail(mailOptions);
+
+        res.status(200).json({
+            message: 'Correo de agradecimiento enviado exitosamente.'
+        });
+
     } catch (e) {
         console.error(e);
         res.status(500).json({ message: 'Error en el servidor' });
     }
-}
+};
+
 
 const citasUsuario = async (req, res) => {
     try {
