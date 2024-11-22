@@ -177,6 +177,7 @@ const citasUsuario = async (req, res) => {
             include: {
                 pet: true, 
                 hour: true,
+                veterinary: true,
                 user: true 
             }
         });
