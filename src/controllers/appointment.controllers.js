@@ -360,10 +360,112 @@ const citasVet = async (req, res) => {
     }
 };
 
+const cancelarCitaUsuario = async (req, res) => {
+    try {
+        const { appointmentId, razon } = req.body;
+
+        const cita = await prisma.appointment.findUnique({
+            where: { id: appointmentId },
+            include: {
+                hour: true,
+                veterinary:true,
+                user: {
+                    select: {
+                        email: true,
+                        firstName: true,
+                        lastName: true, // Ajusta según el modelo
+                    }
+                }
+            }
+        });
+        
+
+        if (!cita) {
+            return res.status(404).json({ message: 'Cita no encontrada' });
+        }
+
+        const fechaCita = new Date(cita.date);
+        const fechaActual = new Date();
+        const diferenciaDias = Math.ceil((fechaCita - fechaActual) / (1000 * 60 * 60 * 24));
+
+        if (diferenciaDias < 3) {
+            return res.status(400).json({ message: 'La cita solo se puede cancelar con al menos 3 días de anticipación' });
+        }
+
+        const userName = `${cita.user.firstName} ${cita.user.lastName}`;
+        // Eliminar la cita
+        await prisma.appointment.delete({
+            where: { id: appointmentId }
+        });
+
+        // Configurar transporte de correo
+        const transporter = nodemailer.createTransport({
+            service: 'Gmail', // O cualquier otro servicio SMTP
+            auth:  { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS }
+        });
+
+
+        // Configurar el mensaje de correo
+        const mailOptions = {
+            from: process.env.EMAIL_USER, // Reemplaza con tu correo
+            to: cita.veterinary.email, // Correo del usuario
+            subject: 'Cancelación de cita',
+            html: `
+  
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background-color: #f9f9f9;">
+                  <!-- Cabecera con el logo -->
+                  <header style="text-align: center; margin-bottom: 20px;">
+                    <img src="https://res.cloudinary.com/dkwulpnkt/image/upload/v1730681515/logo_u7zvk1.png" alt="Spike Logo" style="max-width: 100px; margin-bottom: 10px;">
+                    <h1 style="color: #4CAF50; font-size: 24px; margin: 0;">Cancelación de cita</h1>
+                  </header>
+                  <!-- Contenido principal -->
+                  <main>
+                    <p style="color: #333; font-size: 16px; line-height: 1.5;">
+                      Hola <strong>${cita.veterinary.veterinarieName || 'Usuario'}</strong>,
+                    </p>
+                    <p style="color: #333; font-size: 16px; line-height: 1.5;">
+                      Lamentamos informarte que la cita programada para el día 
+                      <strong>${fechaCita.toLocaleDateString()}</strong> a las 
+                      <strong>${cita.hour.hour}</strong> con el usuario
+                      <strong>${userName}</strong> ha sido cancelada.
+                    </p>
+                    <p style="color: #333; font-size: 16px; line-height: 1.5; font-style: italic;">
+                      Motivo de cancelación del usuario: ${razon || 'Sin especificar'}
+                    </p>
+                    <p style="color: #555; font-size: 14px; line-height: 1.5;">
+                      Si necesitas más información o ayuda, no dudes en contactarnos. ¡Estamos aquí para ayudarte!
+                    </p>
+                  </main>
+                  <!-- Pie de página -->
+                  <footer style="margin-top: 20px; text-align: center; padding: 10px; border-top: 1px solid #ddd;">
+                    <p style="color: #999; font-size: 12px; margin: 0;">
+                      Atentamente,<br><strong>Equipo Spike</strong>
+                    </p>
+                    <p style="color: #999; font-size: 12px; margin: 5px 0;">
+                      <em>Tu aliado en el cuidado de tus mascotas</em>
+                    </p>
+                  </footer>
+                </div>
+            `
+        };
+
+        await transporter.sendMail(mailOptions);
+
+        res.status(200).json({
+            message: 'Cita cancelada exitosamente y el horario ha sido reabierto. Se ha enviado un correo de cancelación al usuario.'
+        });
+
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ message: 'Error en el servidor' });
+    }
+};
+
 module.exports = {
     crearCita,
     cancelarCita,
     completadaCita,
     citasUsuario,
-    citasVet
+    citasVet,
+    cancelarCitaUsuario
 };
