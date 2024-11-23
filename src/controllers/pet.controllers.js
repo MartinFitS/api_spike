@@ -231,5 +231,33 @@ const deathPet = async(req,res) => {
     }
 }
 
+const deathPetsById = async (req, res) => {
+    try {
+        const { id } = req.params;
 
-module.exports = {createPet,getPets,getPet,updatePet,deathPet}
+        const idNumber = parseInt(id,10)
+
+        if (!idNumber) {
+            return res.status(400).json({ message: "El ID del usuario es requerido" });
+        }
+
+        const deceasedPets = await prisma.deceasedPet.findMany({
+            where: {
+                ownerId: idNumber, 
+            },
+        });
+
+        if (deceasedPets.length === 0) {
+            return res.status(404).json({ message: "No se encontraron mascotas fallecidas para este usuario" });
+        }
+
+        res.status(200).json(deceasedPets);
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ message: "Error al obtener las mascotas fallecidas" });
+    }
+};
+
+
+
+module.exports = {createPet,getPets,getPet,updatePet,deathPet,deathPetsById}
