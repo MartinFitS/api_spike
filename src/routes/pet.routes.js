@@ -1,7 +1,7 @@
 
 const {Router} = require("express");
 const verifyTokenFromBody = require("../middlewares/verifyTokenFromBody");
-const {createPet,getPets,getPet,updatePet,deathPet} = require("../controllers/pet.controllers")
+const {createPet,getPets,getPet,updatePet,deathPet,deathPetsById} = require("../controllers/pet.controllers")
 
 const router = Router();
 
@@ -416,5 +416,7 @@ router.get("/getpet/:id", getPet);
  */
 
 router.post("/deathPet", deathPet)
+
+router.get("/deathpets/:id", deathPetsById)
 
 module.exports = router
