@@ -1,6 +1,6 @@
 const {Router} = require("express");
 const router = Router();
-const {crearCita,cancelarCita,completadaCita,citasUsuario,citasVet} = require("../controllers/appointment.controllers")
+const {crearCita,cancelarCita,completadaCita,citasUsuario,citasVet,cancelarCitaUsuario} = require("../controllers/appointment.controllers")
 
 /**
  * @swagger
@@ -393,5 +393,7 @@ router.post("/citasVet", citasVet)
  */
 
 router.post("/citaCompletada", completadaCita)
+
+router.post("/cancelarcita/usuario", cancelarCitaUsuario)
 
 module.exports = router;
