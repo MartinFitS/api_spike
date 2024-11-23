@@ -237,6 +237,11 @@ const completadaCita = async (req, res) => {
             return res.status(404).json({ message: 'Cita no encontrada' });
         }
 
+        const citaActualizada = await prisma.appointment.update({
+            where: { id: appointmentId },
+            data: { done: true }
+        });
+
         const userName = `${cita.user.firstName} ${cita.user.lastName}`;
         const fechaCita = new Date(cita.date);
 
@@ -291,9 +296,7 @@ const completadaCita = async (req, res) => {
 
         await transporter.sendMail(mailOptions);
 
-        res.status(200).json({
-            message: 'Correo de agradecimiento enviado exitosamente.'
-        });
+      res.status(200).json({ message: 'Cita marcada como realizada y correo mandado', cita: citaActualizada });
 
     } catch (e) {
         console.error(e);
