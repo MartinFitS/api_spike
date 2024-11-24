@@ -130,7 +130,7 @@ const updatePet = async (req, res) => {
         }
 
         const { id } = req.params;
-        const { weight, height } = req.body;
+        const { weight, height, name } = req.body;
 
         try {
             const pet = await prisma.pet.findUnique({
@@ -150,6 +150,7 @@ const updatePet = async (req, res) => {
             const totalAgeInMonths = isNaN(monthsSinceCreation) ? initialAge : initialAge + monthsSinceCreation;
 
             let updateData = {
+                name: name,
                 weight: parseFloat(weight) || pet.weight,      
                 height: height ? String(height) : pet.height,  
                 age: totalAgeInMonths                         
