@@ -16,7 +16,7 @@ const { sendVerificationEmail } = require('../utils/mailer');
 const createUser = async (req, res) => {
     upload(req, res, async function (err) {
         if (err) {
-            return res.status(500).json({ error: 'Error al cargar la imagen' });
+            return res.status(500).json({ error: 'Error loading image.' });
         }
 
         const { firstName, lastName, email, phone, password, role, city, number_int, cp } = req.body;
@@ -25,37 +25,37 @@ const createUser = async (req, res) => {
 
         try {
             if (role !== "PET_OWNER" && role !== "ADMIN") {
-                return res.status(400).json({ error: 'El rol debe ser "VETERINARY_OWNER" o "ADMIN"' });
+                return res.status(400).json({ error: 'The role must be "VETERINARY_OWNER" or "ADMIN".' });
             }
             if (!phoneRegex.test(phone)) {
-                return res.status(400).json({ error: 'El número telefónico debe tener 10 dígitos.' });
+                return res.status(400).json({ error: 'The phone number must be 10 digits.' });
             }
             if (!passwordRegex.test(password)) {
                 return res.status(400).json({
-                    error: 'La contraseña debe tener al menos 8 caracteres, incluir una mayúscula, un número y un símbolo especial'
+                    error: 'The password must be at least 8 characters, include a capital letter, a number, and a special symbol'
                 });
             }
             const emailExists = await prisma.user.findUnique({ where: { email } });
             if (emailExists) {
-                return res.status(400).json({ error: 'El correo ya está registrado en la bd' });
+                return res.status(400).json({ error: 'The email is already registered in the database.' });
             }
 
             try {
                 const emailVerification = await hunterClient.verifyEmail(email);
                 if (!emailVerification.data || emailVerification.data.status !== 'valid') {
                     return res.status(400).json({ 
-                        error: 'Email inválido',
+                        error: 'Invalid Email',
                         details: {
-                            message: 'La verificación del email falló',
+                            message: 'Email verification failed.',
                             emailChecked: email,
                         }
                     });
                 }
             } catch (hunterError) {
                 return res.status(500).json({
-                    error: 'Error en verificación de email',
+                    error: 'Email verification error.',
                     details: {
-                        message: 'Error al verificar el email con Hunter',
+                        message: 'Error verifying email with Hunter',
                         emailChecked: email,
                     }
                 });
@@ -63,7 +63,7 @@ const createUser = async (req, res) => {
 
             const phoneExists = await prisma.user.findFirst({ where: { phone } });
             if (phoneExists) {
-                return res.status(400).json({ error: 'El número telefónico ya está en uso' });
+                return res.status(400).json({ error: 'The phone number is already in use' });
             }
 
             const hashedPassword = await bcrypt.hash(password, 10);
