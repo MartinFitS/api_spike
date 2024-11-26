@@ -73,7 +73,7 @@ const createPet = async (req, res) => {
                 }
             });
   
-            res.status(201).json({ message: "Mascota creada correctamente", newPet });
+            res.status(201).json({ message: "Pet successfully created.", newPet });
         } catch (e) {
             console.error(e);
             res.status(500).json({ error: "An error occurred while creating the pet" });
@@ -181,7 +181,7 @@ const updatePet = async (req, res) => {
                 data: updateData
             });
 
-            res.status(200).json({ message: "Mascota actualizada correctamente", updatedPet });
+            res.status(200).json({ message: "Pet updated successfully.", updatedPet });
         } catch (e) {
             console.error(e);
             res.status(500).json({ error: "Error al actualizar la mascota" });

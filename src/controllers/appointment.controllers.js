@@ -141,7 +141,7 @@ const cancelarCita = async (req, res) => {
         const diferenciaDias = Math.ceil((fechaCita - fechaActual) / (1000 * 60 * 60 * 24));
 
         if (diferenciaDias < 3) {
-            return res.status(400).json({ message: 'La cita solo se puede cancelar con al menos 3 días de anticipación' });
+            return res.status(400).json({ message: 'The appointment can only be canceled with at least 3 days notice.' });
         }
 
         const userName = `${cita.user.firstName} ${cita.user.lastName}`;
@@ -296,7 +296,7 @@ const completadaCita = async (req, res) => {
 
         await transporter.sendMail(mailOptions);
 
-      res.status(200).json({ message: 'Cita marcada como realizada y correo mandado', cita: citaActualizada });
+      res.status(200).json({ message: 'Appointment marked as made and email sent.', cita: citaActualizada });
 
     } catch (e) {
         console.error(e);
@@ -388,7 +388,7 @@ const cancelarCitaUsuario = async (req, res) => {
         const diferenciaDias = Math.ceil((fechaCita - fechaActual) / (1000 * 60 * 60 * 24));
 
         if (diferenciaDias < 3) {
-            return res.status(400).json({ message: 'La cita solo se puede cancelar con al menos 3 días de anticipación' });
+            return res.status(400).json({ message: 'The appointment can only be canceled with at least 3 days notice.' });
         }
 
         const userName = `${cita.user.firstName} ${cita.user.lastName}`;

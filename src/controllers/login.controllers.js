@@ -28,13 +28,13 @@ const login = async (req, res) => {
         }
 
         if (userFromUsers && userFromUsers.isActive === false) {
-            return res.status(403).json({ message: 'La cuenta no está verificada' });
+            return res.status(403).json({ message: 'The account is not verified.' });
         }
 
         const passwordMatch = await bcrypt.compare(password, user.password);
         
         if (!passwordMatch) {
-            return res.status(401).json({ message: 'Contraseña incorrecta' });
+            return res.status(401).json({ message: 'Wrong password.' });
         }
 
         const token = jwt.sign(

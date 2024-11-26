@@ -10,7 +10,7 @@ const verifyEmail = async (req, res) => {
         });
 
         if (!existingUser) {
-            return res.status(404).render('error', { message: 'Usuario no encontrado.' });
+            return res.status(404).render('error', { message: 'User not found.' });
         }
 
         await prisma.user.update({
@@ -21,7 +21,7 @@ const verifyEmail = async (req, res) => {
         res.status(200).render('verifyEmail');
     } catch (e) {
         console.error(e);
-        res.status(400).render('error', { message: 'Error al verificar el correo.' });
+        res.status(400).render('error', { message: 'Error verifying email.' });
     }
 };
 
@@ -36,7 +36,7 @@ const deleteUser = async (req, res) => {
         res.status(200).render('deleteUser');
     } catch (e) {
         console.error(e);
-        res.status(400).render('error', { message: 'Error al eliminar la cuenta.' });
+        res.status(400).render('error', { message: 'Error deleting account.' });
     }
 };
 

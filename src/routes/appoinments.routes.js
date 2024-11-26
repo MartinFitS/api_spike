@@ -397,3 +397,6 @@ router.post("/citaCompletada", completadaCita)
 router.post("/cancelarcita/usuario", cancelarCitaUsuario)
 
 module.exports = router;
+
+
+//Cancelar cita 3 dias
