@@ -23,8 +23,8 @@ app.use(
 app.use("/api", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use(express.static(path.join(__dirname, 'public')));
 
-
-app.use(express.json());
+app.use(express.json({ limit: '20mb' }));
+app.use(express.urlencoded({ limit: '20mb', extended: true }));
 
 app.use(helmet.contentSecurityPolicy({
   directives: {
